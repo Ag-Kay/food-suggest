@@ -1,0 +1,501 @@
+// Food Suggest database schema (Milestone 0 draft).
+// Enum values must stay in sync with packages/shared/src/enums.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum Goal {
+  LOSE_WEIGHT
+  GAIN_WEIGHT
+  BUILD_MUSCLE
+  MAINTAIN_WEIGHT
+  EAT_HEALTHIER
+}
+
+enum DietType {
+  OMNIVORE
+  VEGETARIAN
+  VEGAN
+  PESCATARIAN
+}
+
+enum Allergen {
+  PEANUT
+  TREE_NUT
+  MILK
+  EGG
+  FISH
+  CRUSTACEAN
+  MOLLUSC
+  SOY
+  WHEAT_GLUTEN
+  SESAME
+  MUSTARD
+  CELERY
+  SULPHITES
+  LUPIN
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum MealSlot {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum CookingSkill {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum BudgetLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Sex {
+  FEMALE
+  MALE
+}
+
+enum NutritionMethod {
+  CALCULATED_FROM_INGREDIENTS
+  LAB_ANALYSIS
+  EXTERNAL_SOURCE
+}
+
+enum NutritionReliability {
+  ESTIMATED
+  VERIFIED
+}
+
+/// Whether an ingredient is compatible with a diet. Derived per ingredient,
+/// then a meal variant is only compatible if ALL its ingredients are.
+enum DietCompatibility {
+  VEGAN
+  VEGETARIAN
+  PESCATARIAN
+  OMNIVORE_ONLY
+}
+
+enum IngredientPreference {
+  LIKE
+  DISLIKE
+  AVOID
+}
+
+/// How well a source food matches our ingredient.
+enum SourceMatch {
+  /// Same food, same state (e.g. "Tilapia, fillet, raw").
+  EXACT
+  /// Same food, minor difference (variety, brand-neutral equivalent).
+  CLOSE
+  /// A different but similar food used as a stand-in. Shown to users.
+  PROXY
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ShoppingItemSource {
+  GENERATED
+  MANUAL
+}
+
+// ───────────────────────────── Users ─────────────────────────────
+
+/// One row per registered user. `id` is the Supabase Auth user id (UUID),
+/// so we never store passwords. Anonymous users have no row at all.
+model User {
+  id                  String    @id @db.Uuid
+  email               String?   @unique
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  /// Set when deletion is requested; a job hard-deletes after the grace period.
+  deletionRequestedAt DateTime?
+
+  profile         Profile?
+  allergens       UserAllergen[]
+  ingredientPrefs UserIngredientPref[]
+  cuisinePrefs    UserCuisinePref[]
+  consents        Consent[]
+  favorites       Favorite[]
+  mealPlans       MealPlan[]
+  shoppingLists   ShoppingList[]
+}
+
+/// Sensitive personal data. All fields optional except the age gate.
+model Profile {
+  userId         String         @id @db.Uuid
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  birthYear      Int
+  heightCm       Decimal?       @db.Decimal(5, 1)
+  weightKg       Decimal?       @db.Decimal(5, 1)
+  sex            Sex?
+  activityLevel  ActivityLevel?
+  goal           Goal?
+  dietType       DietType?
+  mealsPerDay    Int?
+  preferredSlots MealSlot[]
+  maxCookMinutes Int?
+  cookingSkill   CookingSkill?
+  budget         BudgetLevel?
+  showCalories   Boolean        @default(false)
+  /// ISO 3166-1 alpha-2, used for currency/locale display.
+  countryCode    String?        @db.Char(2)
+  updatedAt      DateTime       @updatedAt
+}
+
+model UserAllergen {
+  userId   String   @db.Uuid
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allergen Allergen
+
+  @@id([userId, allergen])
+}
+
+model UserIngredientPref {
+  userId       String               @db.Uuid
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  preference   IngredientPreference
+
+  @@id([userId, ingredientId])
+}
+
+model UserCuisinePref {
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cuisineId String
+  cuisine   Cuisine @relation(fields: [cuisineId], references: [id], onDelete: Cascade)
+
+  @@id([userId, cuisineId])
+}
+
+/// Audit trail of what the user agreed to and when (privacy policy, health data).
+model Consent {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  version   String
+  granted   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId, type])
+}
+
+// ─────────────────────────── Catalogue ───────────────────────────
+
+model Cuisine {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  /// ISO 3166-1 alpha-2 country, null for regional/international cuisines.
+  countryCode String? @db.Char(2)
+
+  meals     Meal[]
+  userPrefs UserCuisinePref[]
+}
+
+model Category {
+  id    String         @id @default(cuid())
+  slug  String         @unique
+  name  String
+  meals MealCategory[]
+}
+
+/// Where a nutrition figure came from, with its licence for compliance.
+model NutritionSource {
+  id                   String  @id @default(cuid())
+  slug                 String  @unique
+  name                 String
+  url                  String?
+  license              String
+  citation             String?
+  /// Must be true before data from this source ships in a commercial release.
+  /// e.g. USDA FDC (CC0) = true; FAO WAFCT 2019 = false until FAO grants a licence.
+  commercialUseCleared Boolean @default(false)
+
+  ingredientNutrients IngredientNutrients[]
+}
+
+model Ingredient {
+  id                String            @id @default(cuid())
+  slug              String            @unique
+  name              String
+  /// Local and alternative names, e.g. "kontomire" for cocoyam leaves.
+  aliases           String[]
+  shoppingCategory  String
+  dietCompatibility DietCompatibility
+  /// Grams per "unit" when the ingredient is counted (e.g. 1 egg ~ 50 g).
+  gramsPerUnit      Decimal?          @db.Decimal(8, 2)
+  /// Grams per millilitre, to convert volumes to weight.
+  gramsPerMl        Decimal?          @db.Decimal(6, 3)
+  /// True only once every allergen for this ingredient has been reviewed.
+  /// Unreviewed ingredients make a meal ineligible for users with allergies.
+  allergensReviewed Boolean           @default(false)
+
+  allergens     IngredientAllergen[]
+  nutrients     IngredientNutrients?
+  usedIn        VariantIngredient[]
+  userPrefs     UserIngredientPref[]
+  shoppingItems ShoppingListItem[]
+}
+
+model IngredientAllergen {
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  allergen     Allergen
+
+  @@id([ingredientId, allergen])
+}
+
+/// Nutrients per 100 g of the ingredient as purchased/prepared state noted in `basis`.
+model IngredientNutrients {
+  ingredientId  String               @id
+  ingredient    Ingredient           @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  sourceId      String
+  source        NutritionSource      @relation(fields: [sourceId], references: [id])
+  /// Identifier inside the source, e.g. USDA FDC id or WAFCT code.
+  sourceRef     String?
+  basis         String               @default("raw, edible portion")
+  matchQuality  SourceMatch          @default(EXACT)
+  /// Why this source food was chosen, required for CLOSE and PROXY matches.
+  matchNote     String?
+  energyKcal    Decimal              @db.Decimal(7, 2)
+  proteinG      Decimal              @db.Decimal(7, 2)
+  carbsG        Decimal              @db.Decimal(7, 2)
+  fatG          Decimal              @db.Decimal(7, 2)
+  fibreG        Decimal?             @db.Decimal(7, 2)
+  sugarsG       Decimal?             @db.Decimal(7, 2)
+  saturatedFatG Decimal?             @db.Decimal(7, 2)
+  sodiumMg      Decimal?             @db.Decimal(8, 2)
+  ironMg        Decimal?             @db.Decimal(7, 2)
+  calciumMg     Decimal?             @db.Decimal(8, 2)
+  reliability   NutritionReliability @default(ESTIMATED)
+  updatedAt     DateTime             @updatedAt
+}
+
+// ───────────────────────────── Meals ─────────────────────────────
+
+model Meal {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  localNames  String[]
+  description String
+  cuisineId   String
+  cuisine     Cuisine       @relation(fields: [cuisineId], references: [id])
+  slots       MealSlot[]
+  status      ContentStatus @default(DRAFT)
+  popularity  Int           @default(0)
+  imageId     String?
+  image       Image?        @relation(fields: [imageId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  variants   MealVariant[]
+  categories MealCategory[]
+  favorites  Favorite[]
+
+  @@index([status, cuisineId])
+}
+
+model MealCategory {
+  mealId     String
+  meal       Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([mealId, categoryId])
+}
+
+/// A preparation style of a meal (e.g. "home-style" vs "chop-bar" waakye).
+/// Ingredients, steps and nutrition belong to the variant, not the meal.
+model MealVariant {
+  id             String       @id @default(cuid())
+  mealId         String
+  meal           Meal         @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  name           String
+  isDefault      Boolean      @default(false)
+  servings       Int
+  prepMinutes    Int
+  cookMinutes    Int
+  difficulty     CookingSkill
+  /// Seed recipes are Food Suggest drafts until a cook/nutrition reviewer checks them.
+  recipeReviewed Boolean      @default(false)
+  notes          String?
+
+  ingredients VariantIngredient[]
+  steps       VariantStep[]
+  nutrition   VariantNutrition?
+  planEntries MealPlanEntry[]
+
+  @@index([mealId])
+}
+
+model VariantIngredient {
+  id           String      @id @default(cuid())
+  variantId    String
+  variant      MealVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
+  /// Quantity as a cook would read it ("2", "cups").
+  quantity     Decimal     @db.Decimal(8, 2)
+  unit         String
+  /// Weight in grams used for nutrition maths. Null = not convertible
+  /// (then the variant's nutrition cannot be CALCULATED).
+  grams        Decimal?    @db.Decimal(8, 2)
+  optional     Boolean     @default(false)
+  note         String?
+  position     Int
+
+  @@index([variantId])
+}
+
+model VariantStep {
+  id        String      @id @default(cuid())
+  variantId String
+  variant   MealVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  position  Int
+  text      String
+
+  @@unique([variantId, position])
+}
+
+/// Per-serving nutrition for a variant, with provenance.
+model VariantNutrition {
+  variantId             String               @id
+  variant               MealVariant          @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  /// Sum of raw ingredient grams per serving (what nutrition is based on).
+  rawGramsPerServing    Decimal              @db.Decimal(7, 1)
+  /// Cooked portion weight, only when measured.
+  cookedGramsPerServing Decimal?             @db.Decimal(7, 1)
+  energyKcal            Decimal              @db.Decimal(7, 1)
+  proteinG              Decimal              @db.Decimal(6, 1)
+  carbsG                Decimal              @db.Decimal(6, 1)
+  fatG                  Decimal              @db.Decimal(6, 1)
+  fibreG                Decimal?             @db.Decimal(6, 1)
+  sugarsG               Decimal?             @db.Decimal(6, 1)
+  saturatedFatG         Decimal?             @db.Decimal(6, 1)
+  sodiumMg              Decimal?             @db.Decimal(7, 1)
+  method                NutritionMethod
+  reliability           NutritionReliability @default(ESTIMATED)
+  /// Who verified it and when (only when reliability = VERIFIED).
+  reviewedBy            String?
+  reviewedAt            DateTime?
+  calculatedAt          DateTime             @default(now())
+}
+
+model Image {
+  id         String  @id @default(cuid())
+  storageKey String  @unique
+  width      Int
+  height     Int
+  altText    String
+  credit     String
+  license    String
+  sourceUrl  String?
+
+  meals Meal[]
+}
+
+// ─────────────────────────── User content ───────────────────────────
+
+model Favorite {
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealId    String
+  meal      Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, mealId])
+}
+
+model MealPlan {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries       MealPlanEntry[]
+  shoppingLists ShoppingList[]
+
+  @@index([userId, startDate])
+}
+
+model MealPlanEntry {
+  id        String      @id @default(cuid())
+  planId    String
+  plan      MealPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date      DateTime    @db.Date
+  slot      MealSlot
+  variantId String
+  variant   MealVariant @relation(fields: [variantId], references: [id])
+  servings  Decimal     @default(1) @db.Decimal(4, 2)
+  position  Int         @default(0)
+
+  @@index([planId, date])
+}
+
+model ShoppingList {
+  id        String    @id @default(cuid())
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The plan this list was generated from, if any.
+  planId    String?
+  plan      MealPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  items ShoppingListItem[]
+
+  @@index([userId])
+}
+
+model ShoppingListItem {
+  id           String             @id @default(cuid())
+  listId       String
+  list         ShoppingList       @relation(fields: [listId], references: [id], onDelete: Cascade)
+  /// Null for free-text manual items.
+  ingredientId String?
+  ingredient   Ingredient?        @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  name         String
+  /// Null quantity = "to taste" / unquantified.
+  quantity     Decimal?           @db.Decimal(10, 2)
+  unit         String?
+  category     String
+  checked      Boolean            @default(false)
+  source       ShoppingItemSource
+  position     Int                @default(0)
+
+  @@index([listId])
+}

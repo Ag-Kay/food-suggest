@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+# Expo
+.expo/
+expo-env.d.ts
+apps/mobile/ios/
+apps/mobile/android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+# Prisma generated client
+apps/api/src/generated/
+
+# WAFCT is non-commercial licensed: never commit the extracted data
+apps/api/prisma/seed/data/wafct.local.json

@@ -1,0 +1,54 @@
+# Progress
+
+## Milestones
+
+| | Milestone | Status |
+|---|---|---|
+| M0 | Foundations: monorepo, design tokens, tabs, API skeleton, schema, docs | ✅ Done (2026-11-07) |
+| M1 | Content: ingredient import (WAFCT + USDA), seed meals, nutrition calculator | ✅ Done (2026-11-07) |
+| M2 | Discovery: search, filters, meal details, loading/empty/error states | ⏳ Next |
+| M3 | Onboarding + rule-based recommendations, allergy test suite | Pending |
+| M4 | Auth (email OTP, Apple, Google), claim local data, favourites, account deletion | Pending |
+| M5 | Meal planning + shopping lists | Pending |
+| M6 | Hardening: accessibility, offline, privacy policy, TestFlight / Play testing | Pending |
+| v1.1 | AI explanations and alternatives (Groq) | Pending |
+
+## M0 — what exists
+
+- `packages/shared`: enums, `ProfileInput` schema (16+ age gate), API error/health schemas. Tests.
+- `apps/api`: Express 5 app factory, env validation, pino logging with redaction, helmet,
+  rate limiting, 404 + error handler, `validateBody` middleware, `GET /v1/health`.
+  Tests (Vitest + Supertest), ESLint, tsup production build.
+- `apps/api/prisma/schema.prisma`: full MVP schema (validated, client generates).
+  **No migration yet** — needs a database (M1).
+- `apps/mobile`: five native tabs (Home, Discover, Plan, Lists, Profile), design tokens
+  for light/dark, `AppText`, `Button`, `Card`, `Screen`, `EmptyState`.
+
+## M1 — what exists
+
+- Local Postgres via `prisma dev`; two migrations (`init`, `source_match_and_review`).
+- Nutrition calculator (`modules/nutrition/calculator.ts`) with strict accuracy rules. Tests.
+- USDA FDC client (`integrations/fdc/client.ts`), server-only, tested; salmon snapshot committed.
+- WAFCT extractor (`scripts/extract_wafct.py`, stdlib only) → git-ignored local JSON.
+- Seed: 2 sources, 2 cuisines, 9 categories, 50 ingredients (allergen + diet tags,
+  source codes, match quality), 15 meals / 16 variants (11 Ghanaian, 4 international),
+  all with calculated per-serving nutrition.
+- Diet/allergen derivation (`modules/meals/derive.ts`). Tests.
+- Public read-only API: `GET /v1/meals` (search + filters), `GET /v1/meals/:slug`,
+  `GET /v1/cuisines`, `GET /v1/categories`. Route tests with a fake repository; manually
+  verified against the seeded database.
+
+## Known gaps / to do
+
+- **Launch blocker:** request a commercial licence for WAFCT 2019 from FAO, or move to USDA equivalents.
+- All 15 recipes need review by a cook / nutritionist (`recipeReviewed = false`).
+- Shito and waakye leaves have no composition data (both optional, excluded from totals).
+- Curry powder and stock cubes: allergen content is brand-dependent (`allergensReviewed = false`).
+- No meal images yet (`imageUrl` is null).
+- No database integration tests yet (repository is exercised manually); add a test database in M3.
+- Supabase project (M4, with auth).
+- Mobile unit tests (jest-expo + React Native Testing Library) — set up with the first
+  real logic in M2.
+- App icon and splash are still Expo placeholders; need brand assets.
+- iOS bundle identifier / Android package name not set yet — choose before the first EAS build.
+- Web is not a target; the native-tabs layout is not tuned for web.

@@ -1,0 +1,88 @@
+# Decisions log
+
+Newest first. Each entry: what we decided, why, and what would make us revisit it.
+
+## 2026-11-07 — Milestone 1 (content)
+
+- **Nutrition sources.** WAFCT 2019 (FAO/INFOODS) for West African foods; USDA FoodData
+  Central for foods WAFCT lacks (so far: salmon). Nutrient numbers are never typed by hand:
+  every ingredient points at a source code and the seed reads the values from the source.
+- **WAFCT licence = non-commercial only** (stated in the workbook's introduction sheet).
+  Commercial use needs a licence from FAO (www.fao.org/contact-us/licence-request,
+  copyright@fao.org). Consequences: the extracted data is git-ignored
+  (`wafct.local.json`), `NutritionSource.commercialUseCleared` is `false` for WAFCT, and
+  this is a **launch blocker** (docs/APP_STORE_RISKS.md). Fallback if FAO says no: replace
+  each WAFCT reference with a USDA FDC equivalent; the schema supports that per ingredient.
+- **USDA FDC snapshots are committed** (`prisma/seed/data/fdc/*.json`, CC0) so seeding is
+  deterministic and needs no API key. `pnpm fdc:fetch` downloads new ones.
+- **Source match quality** on every ingredient: EXACT / CLOSE / PROXY, with a note for
+  CLOSE and PROXY, returned by the API so the app can be transparent. Example: banku uses
+  cooked fermented maize dough as a PROXY (no banku entry exists in WAFCT).
+- **Calculation method:** per-serving nutrition = Σ(ingredient raw edible grams × per-100 g
+  values) ÷ servings. Ignores cooking losses and water; always labelled `ESTIMATED`.
+  Missing core data fails the calculation; missing secondary nutrients become `null`,
+  never a silently low number. WAFCT values in [brackets] (lower quality) are used but
+  recorded during extraction.
+- **Recipes are drafts** (`MealVariant.recipeReviewed = false`) written by the Food Suggest
+  team with typical home quantities. They need review by a Ghanaian cook / nutritionist.
+- **Diet and allergens are derived, not stored per meal**: diet = least plant-based
+  required ingredient; allergens = union over ingredients, with optional-only allergens
+  (e.g. shito on waakye) listed separately. Any ingredient with brand-dependent allergens
+  (curry powder, stock cubes) makes `allergenInfoComplete = false`, shown on cards and
+  details. This module (`modules/meals/derive.ts`) will drive M3 filtering.
+- **Local database:** `prisma dev` (Prisma's built-in local Postgres) instead of Docker or
+  Supabase during M1–M3. Switching is a `DATABASE_URL` change.
+- **Prisma 7 notes:** `migrate dev` no longer runs `generate` — use `pnpm db:setup` or run
+  `pnpm db:generate` after schema changes. The generated client imports `.ts` files, so the
+  API tsconfig has `allowImportingTsExtensions`.
+
+## 2026-11-07 — Milestone 0
+
+### Product decisions (from the owner)
+- **Anonymous users** browse and get recommendations with an on-device profile. They can
+  draft meal plans and shopping lists locally; signing up syncs them via `POST /me/claim`.
+  Anonymous health data is never stored on the server.
+- **Sign-in:** email (6-digit one-time code), Sign in with Apple, Google — via Supabase Auth.
+  Apple sign-in is included because offering Google requires an equivalent option (App
+  Review Guideline 4.8).
+- **Minimum age 16.** 16–17 year olds get no weight-loss calorie targets. We collect birth
+  *year* only (data minimisation) and assume the birthday hasn't happened yet, so gates
+  are conservative.
+- **Calories hidden by default** (`showCalories = false`); recommendations lead with food quality.
+- **No dietitian yet:** all nutrition is labelled `ESTIMATED`; `VERIFIED` requires a named
+  reviewer and date (fields exist in `VariantNutrition`).
+- **Currency** follows the device region. The MVP shows no prices; budget is LOW/MEDIUM/HIGH.
+- **AI provider:** Groq (free tier) as default for v1.1, behind an `AiProvider` interface.
+  Check Groq's free-tier commercial-use terms and rate limits before launch.
+- **Premium subscription** planned later → must use Apple/Google in-app purchase (Guideline 3.1).
+
+### Technical decisions
+- **Monorepo with pnpm workspaces** (`apps/mobile`, `apps/api`, `packages/shared`) so the
+  app and API share one set of Zod schemas. `nodeLinker: hoisted` because React Native /
+  Metro expect a flat `node_modules`. Install scripts are allow-listed (`allowBuilds`).
+- **Expo SDK 58 + Expo Router native tabs** (UITabBar / Material), SF Symbols on iOS and
+  Material Symbols on Android.
+- **No NativeWind (for now).** Latest stable NativeWind (4.2.7) is tested against Expo 57;
+  v5 is a release candidate. We use typed design tokens (`apps/mobile/src/theme/tokens.ts`)
+  plus small themed components. Revisit when NativeWind officially supports our SDK; the
+  tokens map directly onto a Tailwind theme.
+- **Prisma pinned to 7.10.1** (CLI and client, exact). npm's `latest` tag for `prisma`
+  currently points at an 8.0 release candidate. Prisma 7 uses `prisma.config.ts`, the
+  `prisma-client` generator (output `src/generated/prisma`, git-ignored) and the
+  `@prisma/adapter-pg` driver adapter.
+- **ESLint pinned to 9.x** across the workspace: `eslint-plugin-react` (used by
+  `eslint-config-expo`) does not yet support ESLint 10. Lint runs `eslint src` directly.
+- **API build:** `tsx` for dev, `tsup` bundles to `dist/` for production (bundles the
+  TypeScript-source shared package).
+- **Logging:** pino with header redaction; request logs contain only id, method, URL and
+  status. Request bodies are never logged (they can carry health data).
+- **Errors:** one handler, one envelope: `{ error: { code, message, details? } }`.
+  Internal errors never leak messages to clients.
+- **Rate limiting:** global 120 req/min/IP for now; stricter per-route limits come with
+  search, recommendations and AI.
+- **Data model highlights:** dish nutrition lives on `MealVariant` (preparation styles
+  differ); ingredient nutrients per 100 g with `NutritionSource` (licence tracked);
+  `Ingredient.allergensReviewed` — meals with unreviewed ingredients are excluded for
+  users who declared any allergy (fail closed).
+- **State management (from M2):** Zustand for on-device state, TanStack Query for server
+  data. Not installed yet — added when first used.

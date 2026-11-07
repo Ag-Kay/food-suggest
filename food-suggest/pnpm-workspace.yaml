@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+# React Native / Metro expect a flat node_modules layout.
+nodeLinker: hoisted
+
+# Only these packages may run install scripts (supply-chain hardening).
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true

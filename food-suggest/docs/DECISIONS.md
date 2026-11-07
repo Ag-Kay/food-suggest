@@ -2,6 +2,33 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-07 — Milestone 3 (onboarding + recommendations)
+
+- **Onboarding is optional and on-device.** Home invites the user; nothing is forced. Answers live
+  in a persisted Zustand store on the phone and are sent in the body of
+  `POST /v1/recommendations` for that request only; the API never stores or logs them.
+  POST keeps health data out of URLs, logs and caches.
+- **Only what M3 needs is collected:** birth year (age gate), goal, diet, allergies, cuisines,
+  foods to avoid, cooking time and skill. Height, weight, sex and activity are deferred until
+  calorie targets exist (data minimisation).
+- **Age:** under-16 entry shows a friendly block and *clears any saved profile*. 16–17 year olds who
+  pick weight loss get "eat healthier" ranking and a note instead.
+- **Engine (`modules/recommendations/engine.ts`), in order:**
+  1. Hard filters: declared allergens; any meal with brand-dependent allergen info if the user has
+     *any* allergy (fail closed); diet; avoided ingredients; max cooking time; slot.
+  2. Optional extras that conflict (e.g. shito with a fish allergy) keep the meal but add a caution.
+  3. Score = 40 + goal points (protein, energy, fibre, sodium heuristics in `THRESHOLDS`) +
+     liked cuisine/ingredients − disliked ingredients − skill mismatch + quick/slot bonuses, clamped 0–100.
+  4. Up to 3 reasons from the largest positive contributions, built from real per-serving values.
+     Calories appear in reasons only when the user turned calories on.
+  Thresholds are ranking heuristics, not dietetic targets; review with a nutritionist.
+- **Allergy test suite** runs every allergen and every diet against the real seed recipes
+  (built from seed files, so it needs no database or licensed data).
+- **Stricter rate limit** on recommendations: 30 requests/minute per IP.
+- Profile food preferences use public **slugs** (ingredients, cuisines), not database IDs.
+- Zustand selectors must not return a fresh `[]` (infinite re-render in Zustand 5): use
+  module-level empty constants.
+
 ## 2026-11-07 — Milestone 2 (discovery)
 
 - **Navigation:** root `Stack` in `app/_layout.tsx`; the five native tabs live in the

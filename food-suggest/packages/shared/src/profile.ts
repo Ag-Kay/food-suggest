@@ -11,6 +11,8 @@ import {
   Sex,
 } from './enums';
 
+const Slug = z.string().regex(/^[a-z0-9-]{1,80}$/);
+
 /** Minimum supported age (product decision, see docs/DECISIONS.md). */
 export const MIN_AGE = 16;
 /** Users below this age get no weight-loss calorie targets. */
@@ -37,10 +39,14 @@ export const ProfileInput = z
     goal: Goal.optional(),
     dietType: DietType.optional(),
     allergens: z.array(Allergen).max(Allergen.options.length).default([]),
-    avoidIngredientIds: z.array(z.string().min(1)).max(200).default([]),
-    likedIngredientIds: z.array(z.string().min(1)).max(200).default([]),
-    dislikedIngredientIds: z.array(z.string().min(1)).max(200).default([]),
-    cuisineIds: z.array(z.string().min(1)).max(50).default([]),
+    /** Ingredient slugs the user never wants (hard filter). */
+    avoidIngredients: z.array(Slug).max(200).default([]),
+    /** Ingredient slugs that make a meal more appealing (soft preference). */
+    likedIngredients: z.array(Slug).max(200).default([]),
+    /** Ingredient slugs the user prefers to skip (soft preference). */
+    dislikedIngredients: z.array(Slug).max(200).default([]),
+    /** Preferred cuisine slugs (soft preference). */
+    cuisines: z.array(Slug).max(50).default([]),
     mealsPerDay: z.number().int().min(1).max(8).optional(),
     preferredSlots: z.array(MealSlot).max(4).default([]),
     maxCookMinutes: z.number().int().min(5).max(480).optional(),

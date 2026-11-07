@@ -10,6 +10,7 @@ import { catalogueRouter } from './modules/catalogue/catalogue.router.js';
 import { healthRouter } from './modules/health/health.router.js';
 import type { MealsRepository } from './modules/meals/meals.repository.js';
 import { mealsRouter } from './modules/meals/meals.router.js';
+import { recommendationsRouter } from './modules/recommendations/recommendations.router.js';
 
 export interface AppDeps {
   logger: Logger;
@@ -42,7 +43,7 @@ export function createApp({
       if (origin && corsOrigins.includes(origin)) {
         res.set('Access-Control-Allow-Origin', origin);
         res.set('Vary', 'Origin');
-        res.set('Access-Control-Allow-Methods', 'GET');
+        res.set('Access-Control-Allow-Methods', 'GET, POST');
         res.set('Access-Control-Allow-Headers', 'Accept, Content-Type');
         res.set('Cross-Origin-Resource-Policy', 'cross-origin');
         if (req.method === 'OPTIONS') return void res.sendStatus(204);
@@ -80,7 +81,10 @@ export function createApp({
 
   const v1 = express.Router();
   v1.use('/health', healthRouter());
-  if (mealsRepo) v1.use('/meals', mealsRouter(mealsRepo));
+  if (mealsRepo) {
+    v1.use('/meals', mealsRouter(mealsRepo));
+    v1.use('/recommendations', recommendationsRouter(mealsRepo));
+  }
   if (db) v1.use('/', catalogueRouter(db));
   app.use('/v1', v1);
 

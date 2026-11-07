@@ -1,9 +1,13 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
-import { AppText, Button, ErrorState, Screen, Skeleton } from '@/components/ui';
+import { AppText, Button, Card, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { MealTile } from '@/features/meals/components/meal-card';
 import { useMealList } from '@/features/meals/queries';
+import { useRecommendations } from '@/features/recommendations/queries';
+import { RecommendationCard } from '@/features/recommendations/recommendation-card';
+import { GOAL_LABELS } from '@/lib/labels';
+import { useProfile } from '@/stores/profile';
 import { useTheme } from '@/hooks/use-theme';
 import { formatMinutes } from '@/lib/format';
 import { useRecentMeals } from '@/stores/recent-meals';
@@ -41,6 +45,61 @@ function TileSkeletons() {
   );
 }
 
+function PickedForYou() {
+  const { space } = useTheme();
+  const router = useRouter();
+  const complete = useProfile((s) => s.onboardingComplete);
+  const goal = useProfile((s) => s.profile.goal);
+  const picks = useRecommendations({ limit: 5 });
+
+  if (!complete) {
+    return (
+      <Card style={{ gap: space.sm }}>
+        <AppText variant="headline">Get suggestions that fit you</AppText>
+        <AppText color="textSecondary">
+          Answer a few optional questions about your goal, diet and allergies. Your answers stay on this phone.
+        </AppText>
+        <Button label="Personalise" onPress={() => router.push('/onboarding')} style={{ marginTop: space.xs }} />
+      </Card>
+    );
+  }
+
+  return (
+    <View style={{ gap: space.md }}>
+      <View style={{ gap: space.xxs }}>
+        <AppText variant="title3">Picked for you</AppText>
+        {goal ? (
+          <AppText variant="footnote" color="textSecondary">
+            Goal: {GOAL_LABELS[goal]}
+          </AppText>
+        ) : null}
+      </View>
+      {picks.data?.notes.map((n) => (
+        <AppText key={n} variant="footnote" color="textSecondary">
+          {n}
+        </AppText>
+      ))}
+      {picks.isPending ? (
+        <>
+          <Skeleton style={{ height: 150 }} />
+          <Skeleton style={{ height: 150 }} />
+        </>
+      ) : picks.isError ? (
+        <ErrorState message={picks.error.message} onRetry={() => picks.refetch()} />
+      ) : picks.data.items.length === 0 ? (
+        <Card style={{ gap: space.sm }}>
+          <AppText variant="headline">No meals match all your choices yet</AppText>
+          <AppText color="textSecondary">
+            We&apos;re adding more meals. You can also relax a preference, such as cooking time, in Profile.
+          </AppText>
+        </Card>
+      ) : (
+        picks.data.items.map((item) => <RecommendationCard key={item.meal.slug} item={item} />)
+      )}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const { space } = useTheme();
   const router = useRouter();
@@ -56,6 +115,8 @@ export default function HomeScreen() {
         </AppText>
         <AppText variant="largeTitle">What would you like to eat?</AppText>
       </View>
+
+      <PickedForYou />
 
       {popular.isError ? (
         <ErrorState message={popular.error.message} onRetry={() => popular.refetch()} />

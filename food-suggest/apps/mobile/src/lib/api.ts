@@ -21,6 +21,8 @@ type Query = Record<string, string | number | undefined | null>;
 
 export interface ApiGetOptions {
   query?: Query;
+  /** JSON body; switches the request to POST. */
+  body?: unknown;
   signal?: AbortSignal;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -35,8 +37,9 @@ export function buildUrl(baseUrl: string, path: string, query: Query = {}): stri
   return `${baseUrl}/v1${path}${params ? `?${params}` : ''}`;
 }
 
+/** GET by default; POST when `body` is given. */
 export async function apiGet<T>(path: string, options: ApiGetOptions = {}): Promise<T> {
-  const { query, signal, timeoutMs = 15_000, fetchImpl = fetch, baseUrl = getApiBaseUrl() } = options;
+  const { query, body, signal, timeoutMs = 15_000, fetchImpl = fetch, baseUrl = getApiBaseUrl() } = options;
 
   // Built by hand: React Native's AbortSignal may lack timeout()/any().
   const controller = new AbortController();
@@ -51,7 +54,12 @@ export async function apiGet<T>(path: string, options: ApiGetOptions = {}): Prom
   let res: Response;
   try {
     res = await fetchImpl(buildUrl(baseUrl, path, query), {
-      headers: { Accept: 'application/json' },
+      method: body === undefined ? 'GET' : 'POST',
+      headers: {
+        Accept: 'application/json',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
     });
   } catch (err) {
@@ -84,4 +92,8 @@ export async function apiGet<T>(path: string, options: ApiGetOptions = {}): Prom
   }
 
   return (await res.json()) as T;
+}
+
+export function apiPost<T>(path: string, body: unknown, options: Omit<ApiGetOptions, 'body'> = {}): Promise<T> {
+  return apiGet<T>(path, { ...options, body });
 }

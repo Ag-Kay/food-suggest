@@ -9,11 +9,14 @@ import type {
 
 import type { Prisma } from '../../generated/prisma/client.ts';
 import type { Db } from '../../lib/db.js';
+import type { RecommendationCandidate } from '../recommendations/engine.js';
 import { deriveAllergens, deriveDiet, dietSatisfies, type DerivableIngredient } from './derive.js';
 
 export interface MealsRepository {
   list(query: MealListQuery): Promise<MealListResponse>;
   getBySlug(slug: string): Promise<MealDetail | null>;
+  /** Every published meal's default variant, prepared for the recommendation engine. */
+  listCandidates(): Promise<RecommendationCandidate[]>;
 }
 
 const variantInclude = {
@@ -99,6 +102,29 @@ function toVariantDetail(v: VariantRow): MealVariantDetail {
   };
 }
 
+function toCard(
+  m: { slug: string; name: string; localNames: string[]; description: string; slots: MealCard['slots']; cuisine: { slug: string; name: string } },
+  v: VariantRow,
+): MealCard {
+  const derivable = toDerivable(v);
+  const allergenSummary = deriveAllergens(derivable);
+  return {
+    slug: m.slug,
+    name: m.name,
+    localNames: m.localNames,
+    description: m.description,
+    cuisine: { slug: m.cuisine.slug, name: m.cuisine.name },
+    slots: m.slots,
+    imageUrl: null,
+    totalMinutes: v.prepMinutes + v.cookMinutes,
+    difficulty: v.difficulty,
+    diet: deriveDiet(derivable),
+    allergens: allergenSummary.allergens,
+    allergenInfoComplete: allergenSummary.allergenInfoComplete,
+    nutrition: toNutrition(v),
+  };
+}
+
 const pickDefault = <T extends { isDefault: boolean }>(variants: T[]): T | undefined =>
   variants.find((v) => v.isDefault) ?? variants[0];
 
@@ -131,27 +157,10 @@ export function createMealsRepository(db: Db): MealsRepository {
       for (const m of meals) {
         const v = pickDefault(m.variants);
         if (!v) continue;
-        const derivable = toDerivable(v);
-        const diet = deriveDiet(derivable);
-        const allergenSummary = deriveAllergens(derivable);
-        const totalMinutes = v.prepMinutes + v.cookMinutes;
-        if (query.diet && !dietSatisfies(diet, query.diet)) continue;
-        if (query.maxMinutes && totalMinutes > query.maxMinutes) continue;
-        cards.push({
-          slug: m.slug,
-          name: m.name,
-          localNames: m.localNames,
-          description: m.description,
-          cuisine: { slug: m.cuisine.slug, name: m.cuisine.name },
-          slots: m.slots,
-          imageUrl: null,
-          totalMinutes,
-          difficulty: v.difficulty,
-          diet,
-          allergens: allergenSummary.allergens,
-          allergenInfoComplete: allergenSummary.allergenInfoComplete,
-          nutrition: toNutrition(v),
-        });
+        const card = toCard(m, v);
+        if (query.diet && !dietSatisfies(card.diet, query.diet)) continue;
+        if (query.maxMinutes && card.totalMinutes > query.maxMinutes) continue;
+        cards.push(card);
       }
 
       return {
@@ -160,6 +169,31 @@ export function createMealsRepository(db: Db): MealsRepository {
         limit: query.limit,
         offset: query.offset,
       };
+    },
+
+    async listCandidates() {
+      const meals = await db.meal.findMany({
+        where: { status: 'PUBLISHED' },
+        include: { cuisine: true, variants: { include: variantInclude } },
+      });
+      return meals.flatMap((m) => {
+        const v = pickDefault(m.variants);
+        if (!v) return [];
+        return [
+          {
+            card: toCard(m, v),
+            requiredIngredients: v.ingredients.filter((i) => !i.optional).map((i) => i.ingredient.slug),
+            optionalIngredients: v.ingredients
+              .filter((i) => i.optional)
+              .map((i) => ({
+                slug: i.ingredient.slug,
+                name: i.ingredient.name,
+                allergens: i.ingredient.allergens.map((a) => a.allergen),
+              })),
+            ingredientNames: Object.fromEntries(v.ingredients.map((i) => [i.ingredient.slug, i.ingredient.name])),
+          },
+        ];
+      });
     },
 
     async getBySlug(slug) {

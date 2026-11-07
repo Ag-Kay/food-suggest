@@ -29,6 +29,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerTintColor: colors.primary, headerBackButtonDisplayMode: 'minimal' }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="meal/[slug]" options={{ title: '' }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

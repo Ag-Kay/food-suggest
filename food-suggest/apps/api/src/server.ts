@@ -8,7 +8,13 @@ const env = loadEnv();
 const logger = createLogger(env);
 const db = env.DATABASE_URL ? createDb(env.DATABASE_URL) : undefined;
 if (!db) logger.warn('DATABASE_URL not set: only /v1/health is available');
-const app = createApp({ logger, db, mealsRepo: db && createMealsRepository(db) });
+const app = createApp({
+  logger,
+  db,
+  mealsRepo: db && createMealsRepository(db),
+  // Expo web dev server only; never enabled in production.
+  corsOrigins: env.NODE_ENV === 'development' ? ['http://localhost:8081'] : [],
+});
 
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT }, 'Food Suggest API listening');

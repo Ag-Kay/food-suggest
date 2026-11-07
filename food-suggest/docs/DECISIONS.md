@@ -2,6 +2,30 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-07 — Milestone 2 (discovery)
+
+- **Navigation:** root `Stack` in `app/_layout.tsx`; the five native tabs live in the
+  `app/(tabs)/` group; `app/meal/[slug].tsx` is pushed over the tabs.
+- **Server data with TanStack Query** (5-minute stale time, 2 retries only for network/5xx/429),
+  **device-only state with Zustand** persisted to AsyncStorage: the calories preference
+  (off by default) and recently viewed meals. Neither leaves the device.
+- **API address:** `EXPO_PUBLIC_API_URL` (e.g. in `apps/mobile/.env.local`). In development
+  only, it falls back to the Expo dev server's host on port 4000, so Expo Go on a phone on
+  the same Wi-Fi reaches the API with no setup. Production builds must set the variable.
+- **Search field instead of the native header search bar:** simpler, identical on iOS and
+  Android, no nested stack per tab. Revisit for iOS polish.
+- **Navigation from cards uses `router.push`, not `<Link asChild>`:** `Link` dropped the
+  pressed-state style on web, breaking the card layout.
+- **Request timeout built with `AbortController`:** `AbortSignal.timeout/any` are not
+  guaranteed in React Native.
+- **Image placeholders** (tinted block with initials, hidden from screen readers) until
+  licensed food photography exists.
+- **Development-only CORS** on the API for `http://localhost:8081` (Expo web), so screens
+  can be checked in a browser. Native apps don't use CORS; production allows no origins.
+- **TypeScript 6** no longer includes all `@types/*` automatically: `apps/mobile/tsconfig.json`
+  lists `"types": ["jest"]`.
+- Expo web uses `"output": "single"` (no server rendering); web is a preview tool, not a target.
+
 ## 2026-11-07 — Milestone 1 (content)
 
 - **Nutrition sources.** WAFCT 2019 (FAO/INFOODS) for West African foods; USDA FoodData

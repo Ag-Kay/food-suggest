@@ -18,9 +18,17 @@ export interface AppDeps {
   /** Database-backed features are mounted only when provided (tests can omit them). */
   db?: Db;
   mealsRepo?: MealsRepository;
+  /** Browser origins allowed to call the API (development only: Expo web). Native apps don't need CORS. */
+  corsOrigins?: string[];
 }
 
-export function createApp({ logger, rateLimitPerMinute = 120, db, mealsRepo }: AppDeps): Express {
+export function createApp({
+  logger,
+  rateLimitPerMinute = 120,
+  db,
+  mealsRepo,
+  corsOrigins = [],
+}: AppDeps): Express {
   const app = express();
 
   // Behind one reverse proxy (Render/Railway) in production, so req.ip is the client.
@@ -28,6 +36,20 @@ export function createApp({ logger, rateLimitPerMinute = 120, db, mealsRepo }: A
   app.disable('x-powered-by');
 
   app.use(helmet());
+  if (corsOrigins.length) {
+    app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      if (origin && corsOrigins.includes(origin)) {
+        res.set('Access-Control-Allow-Origin', origin);
+        res.set('Vary', 'Origin');
+        res.set('Access-Control-Allow-Methods', 'GET');
+        res.set('Access-Control-Allow-Headers', 'Accept, Content-Type');
+        res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+        if (req.method === 'OPTIONS') return void res.sendStatus(204);
+      }
+      next();
+    });
+  }
   app.use(
     pinoHttp({
       logger,

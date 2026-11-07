@@ -3,7 +3,7 @@ import { NativeTabs } from 'expo-router/native-tabs';
 import { useTheme } from '@/hooks/use-theme';
 
 /** Bottom tabs using the platform's native tab bar (UITabBar / Material). */
-export default function AppTabs() {
+export default function TabsLayout() {
   const { colors } = useTheme();
 
   return (

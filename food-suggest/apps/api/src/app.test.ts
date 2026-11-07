@@ -78,6 +78,21 @@ describe('rate limiting', () => {
   });
 });
 
+describe('CORS', () => {
+  it('is off by default', async () => {
+    const res = await request(createApp({ logger })).get('/v1/health').set('Origin', 'http://localhost:8081');
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('allows only listed origins', async () => {
+    const app = createApp({ logger, corsOrigins: ['http://localhost:8081'] });
+    const ok = await request(app).get('/v1/health').set('Origin', 'http://localhost:8081');
+    expect(ok.headers['access-control-allow-origin']).toBe('http://localhost:8081');
+    const other = await request(app).get('/v1/health').set('Origin', 'https://evil.example');
+    expect(other.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
 describe('loadEnv', () => {
   it('applies defaults', () => {
     expect(loadEnv({}).PORT).toBe(4000);

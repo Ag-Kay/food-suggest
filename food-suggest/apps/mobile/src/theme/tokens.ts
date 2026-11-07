@@ -47,6 +47,12 @@ const dark: Record<keyof typeof light, string> = {
 };
 
 export type ColorToken = keyof typeof light;
+
+/** Warm background tints for meal image placeholders (until real photos exist). */
+export const foodTints = {
+  light: ['#F6E3C8', '#E3F2EA', '#F9DCCB', '#EDE7D3', '#E1ECD5', '#F3E0D9'],
+  dark: ['#3A2C1B', '#173A28', '#3D2418', '#2E2A1D', '#22301A', '#35231E'],
+} as const;
 export type Palette = Record<ColorToken, string>;
 export const palettes: { light: Palette; dark: Palette } = { light, dark };
 

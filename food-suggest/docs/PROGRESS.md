@@ -6,8 +6,8 @@
 |---|---|---|
 | M0 | Foundations: monorepo, design tokens, tabs, API skeleton, schema, docs | ✅ Done (2026-11-07) |
 | M1 | Content: ingredient import (WAFCT + USDA), seed meals, nutrition calculator | ✅ Done (2026-11-07) |
-| M2 | Discovery: search, filters, meal details, loading/empty/error states | ⏳ Next |
-| M3 | Onboarding + rule-based recommendations, allergy test suite | Pending |
+| M2 | Discovery: search, filters, meal details, loading/empty/error states | ✅ Done (2026-11-07) |
+| M3 | Onboarding + rule-based recommendations, allergy test suite | ⏳ Next |
 | M4 | Auth (email OTP, Apple, Google), claim local data, favourites, account deletion | Pending |
 | M5 | Meal planning + shopping lists | Pending |
 | M6 | Hardening: accessibility, offline, privacy policy, TestFlight / Play testing | Pending |
@@ -38,7 +38,24 @@
   `GET /v1/cuisines`, `GET /v1/categories`. Route tests with a fake repository; manually
   verified against the seeded database.
 
+## M2 — what exists
+
+- Home: greeting, popular meals, breakfast ideas, recently viewed, "Browse all meals".
+- Discover: search (debounced), filters for meal type, diet, time and cuisine, result count,
+  skeleton loading, empty state with "Clear filters", error state with retry, pull to refresh.
+- Meal detail: name and local names, badges, version switcher, time/servings/difficulty,
+  allergen notice (optional extras, brand-dependent warning), per-serving nutrition with
+  opt-in calories, ingredients, numbered method, "About this recipe" (draft status, sources,
+  close/proxy notes, disclaimer).
+- Mobile tests (jest-expo + Testing Library): formatting, API client errors and timeouts,
+  host parsing, recent-meals store, nutrition panel and allergen notice.
+- Checked in a browser (Expo web, phone-sized): Home, Discover filters and search, detail
+  version switching, back navigation, error and retry.
+
 ## Known gaps / to do
+
+- Save and "Add to plan" buttons arrive with accounts (M4) and meal planning (M5).
+- Not yet checked on a physical device by us (only Expo web); please try on your phone.
 
 - **Launch blocker:** request a commercial licence for WAFCT 2019 from FAO, or move to USDA equivalents.
 - All 15 recipes need review by a cook / nutritionist (`recipeReviewed = false`).

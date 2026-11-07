@@ -57,6 +57,10 @@ pnpm dev:api      # http://localhost:4000/v1/meals
 pnpm dev:mobile   # Expo dev server
 ```
 
+On a phone with Expo Go (same Wi-Fi as your Mac), the app finds the API automatically in
+development. To point it elsewhere, create `apps/mobile/.env.local` with
+`EXPO_PUBLIC_API_URL=http://<your-mac-ip>:4000`.
+
 ### API (so far)
 
 | Route | What it does |

@@ -2,6 +2,27 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-08 — Milestone 5 (meal planning + shopping lists)
+
+- **Plans and lists live on the phone first** (persisted Zustand), for anonymous and signed-in
+  users alike. Account sync is split into **M5b** so this milestone stays shippable; the server
+  tables (`MealPlan`, `ShoppingList`) already exist.
+- **Shopping lists are built by the API, statelessly** (`POST /v1/shopping-list` with slugs and
+  servings): the ingredient data lives there, and nothing personal is stored or logged.
+- **Unit rules:** quantities are added only within one family: mass (g, kg), volume (tsp, tbsp,
+  cup, ml, l) or count (piece). Unknown units are added only when identical. **No conversions
+  between families** (e.g. tbsp → g) — that needs per-ingredient densities and would silently
+  produce wrong amounts. "To taste" lines are dropped when a measured line exists for the same
+  ingredient. Amounts are **rounded up** for display so nobody comes home short.
+- **Servings scale the shopping list only.** Day nutrition is for one person eating one portion
+  of each planned meal (cooking for four doesn't mean eating four portions). Calories in the day
+  summary follow the calories setting.
+- **Plan dates are local "YYYY-MM-DD" strings**, never timestamps, so a Monday meal stays on Monday
+  across time zones and clock changes. Weeks start on Monday. Past days are dropped after 14 days.
+- **One list per plan range:** making a list again for the same days updates it, keeping ticks
+  for lines that are still needed and every item the user added.
+- Optional ingredients (e.g. shito) are on the list, marked "Optional", unless any meal needs them.
+
 ## 2026-11-07 — Milestone 4 (accounts)
 
 - **Email 6-digit code sign-in via Supabase Auth** in this milestone (works in Expo Go).

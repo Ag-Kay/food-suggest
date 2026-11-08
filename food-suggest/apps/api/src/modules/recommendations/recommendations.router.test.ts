@@ -12,6 +12,7 @@ const repo: MealsRepository = {
   getBySlug: vi.fn(),
   listCandidates: vi.fn(async () => seedCandidates()),
   cardsBySlugs: vi.fn(async () => []),
+  recipesBySlugs: vi.fn(async () => new Map()),
 };
 const app = createApp({ logger, mealsRepo: repo });
 const profile = { birthYear: 1990, allergens: ['PEANUT'] };

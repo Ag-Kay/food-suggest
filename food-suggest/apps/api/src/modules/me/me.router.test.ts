@@ -24,6 +24,7 @@ const meals: MealsRepository = {
   getBySlug: vi.fn(),
   listCandidates: vi.fn(async () => []),
   cardsBySlugs: vi.fn(async (slugs: string[]) => slugs.map((slug) => ({ slug }) as MealCard)),
+  recipesBySlugs: vi.fn(async () => new Map()),
 };
 
 const profile = { birthYear: 1990, allergens: ['PEANUT'], goal: 'BUILD_MUSCLE' };

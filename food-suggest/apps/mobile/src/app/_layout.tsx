@@ -37,6 +37,10 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="favorites" options={{ title: 'Saved meals' }} />
+          <Stack.Screen name="plan/schedule" options={{ title: 'Add to plan', presentation: 'modal' }} />
+          <Stack.Screen name="plan/pick-meal" options={{ title: 'Choose a meal', presentation: 'modal' }} />
+          <Stack.Screen name="lists/[id]" options={{ title: '' }} />
+          <Stack.Screen name="lists/edit" options={{ title: 'Edit', presentation: 'modal' }} />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

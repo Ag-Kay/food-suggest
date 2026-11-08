@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native';
 import { AppText, Button, Card, ErrorState, Screen, Skeleton } from '@/components/ui';
 import { MealTile } from '@/features/meals/components/meal-card';
 import { useMealList } from '@/features/meals/queries';
+import { TodayPlanCard } from '@/features/plan/components/today-plan-card';
 import { useRecommendations } from '@/features/recommendations/queries';
 import { RecommendationCard } from '@/features/recommendations/recommendation-card';
 import { GOAL_LABELS } from '@/lib/labels';
@@ -117,6 +118,8 @@ export default function HomeScreen() {
       </View>
 
       <PickedForYou />
+
+      <TodayPlanCard />
 
       {popular.isError ? (
         <ErrorState message={popular.error.message} onRetry={() => popular.refetch()} />

@@ -21,12 +21,13 @@ export function useMealList(filters: MealFilters) {
   });
 }
 
+export const mealDetailQuery = (slug: string) => ({
+  queryKey: mealKeys.detail(slug),
+  queryFn: ({ signal }: { signal: AbortSignal }) => apiGet<MealDetail>(`/meals/${encodeURIComponent(slug)}`, { signal }),
+});
+
 export function useMeal(slug: string | undefined) {
-  return useQuery({
-    queryKey: mealKeys.detail(slug ?? ''),
-    queryFn: ({ signal }) => apiGet<MealDetail>(`/meals/${encodeURIComponent(slug!)}`, { signal }),
-    enabled: !!slug,
-  });
+  return useQuery({ ...mealDetailQuery(slug ?? ''), enabled: !!slug });
 }
 
 export function useCuisines() {

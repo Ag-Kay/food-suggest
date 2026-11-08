@@ -12,6 +12,7 @@ import type { MealsRepository } from './modules/meals/meals.repository.js';
 import { mealsRouter } from './modules/meals/meals.router.js';
 import { recommendationsRouter } from './modules/recommendations/recommendations.router.js';
 import { meRouter, type MeRouterDeps } from './modules/me/me.router.js';
+import { shoppingRouter } from './modules/shopping/shopping.router.js';
 
 export interface AppDeps {
   logger: Logger;
@@ -88,6 +89,7 @@ export function createApp({
   if (mealsRepo) {
     v1.use('/meals', mealsRouter(mealsRepo));
     v1.use('/recommendations', recommendationsRouter(mealsRepo));
+    v1.use('/shopping-list', shoppingRouter(mealsRepo));
     if (account) v1.use('/me', meRouter({ ...account, meals: mealsRepo }));
   }
   if (db) v1.use('/', catalogueRouter(db));

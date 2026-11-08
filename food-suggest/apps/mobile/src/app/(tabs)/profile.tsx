@@ -231,14 +231,15 @@ export default function ProfileScreen() {
       <Card style={{ gap: space.sm }}>
         <AppText variant="headline">Your data</AppText>
         <AppText color="textSecondary">
-          Your answers and recently viewed meals are stored on this phone. Without an account (or without syncing),
-          they are sent to Food Suggest only to pick your suggestions, and are not saved on our servers.
+          Your answers, recently viewed meals, meal plan and shopping lists are stored on this phone. Without an
+          account (or without syncing), your answers are sent to Food Suggest only to pick your suggestions, and
+          planned meals only to build shopping lists. Neither is saved on our servers.
         </AppText>
         <Button
           label="Clear my data from this phone"
           variant="secondary"
           onPress={() =>
-            confirm('Clear your data?', 'This removes your answers and recently viewed meals from this phone.', 'Clear', () =>
+            confirm('Clear your data?', 'This removes your answers, recently viewed meals, meal plan and shopping lists from this phone.', 'Clear', () =>
               clearLocalData(queryClient),
             )
           }

@@ -15,6 +15,7 @@ function fakeRepo(): MealsRepository {
     getBySlug: vi.fn(async (slug) => (slug === 'waakye' ? ({ slug: 'waakye' } as MealDetail) : null)),
     listCandidates: vi.fn(async () => []),
     cardsBySlugs: vi.fn(async () => []),
+    recipesBySlugs: vi.fn(async () => new Map()),
   };
 }
 

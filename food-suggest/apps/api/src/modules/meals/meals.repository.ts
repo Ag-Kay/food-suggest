@@ -10,6 +10,7 @@ import type {
 import type { Prisma } from '../../generated/prisma/client.ts';
 import type { Db } from '../../lib/db.js';
 import type { RecommendationCandidate } from '../recommendations/engine.js';
+import type { RecipeForShopping } from '../shopping/builder.js';
 import { deriveAllergens, deriveDiet, dietSatisfies, type DerivableIngredient } from './derive.js';
 
 export interface MealsRepository {
@@ -19,6 +20,8 @@ export interface MealsRepository {
   listCandidates(): Promise<RecommendationCandidate[]>;
   /** Cards for the given slugs, in the given order (unknown or unpublished slugs are skipped). */
   cardsBySlugs(slugs: string[]): Promise<MealCard[]>;
+  /** Default recipes for the given slugs, keyed by slug (unknown or unpublished slugs are absent). */
+  recipesBySlugs(slugs: string[]): Promise<Map<string, RecipeForShopping>>;
 }
 
 const variantInclude = {
@@ -211,6 +214,53 @@ export function createMealsRepository(db: Db): MealsRepository {
         }),
       );
       return slugs.flatMap((s) => (bySlug.has(s) ? [bySlug.get(s)!] : []));
+    },
+
+    async recipesBySlugs(slugs) {
+      const unique = [...new Set(slugs)];
+      if (!unique.length) return new Map();
+      const meals = await db.meal.findMany({
+        where: { slug: { in: unique }, status: 'PUBLISHED' },
+        select: {
+          slug: true,
+          name: true,
+          variants: {
+            select: {
+              isDefault: true,
+              servings: true,
+              ingredients: {
+                orderBy: { position: 'asc' },
+                select: {
+                  quantity: true,
+                  unit: true,
+                  optional: true,
+                  ingredient: { select: { slug: true, name: true, shoppingCategory: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+      return new Map(
+        meals.flatMap((m) => {
+          const v = pickDefault(m.variants);
+          if (!v) return [];
+          const recipe: RecipeForShopping = {
+            slug: m.slug,
+            name: m.name,
+            servings: v.servings,
+            ingredients: v.ingredients.map((vi) => ({
+              slug: vi.ingredient.slug,
+              name: vi.ingredient.name,
+              category: vi.ingredient.shoppingCategory,
+              quantity: Number(vi.quantity),
+              unit: vi.unit,
+              optional: vi.optional,
+            })),
+          };
+          return [[m.slug, recipe] as const];
+        }),
+      );
     },
 
     async getBySlug(slug) {

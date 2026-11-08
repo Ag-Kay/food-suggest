@@ -1,10 +1,10 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import type { MealVariantDetail } from '@food-suggest/shared';
 
-import { AppText, Badge, Card, Chip, ErrorState, Skeleton } from '@/components/ui';
+import { AppText, Badge, Button, Card, Chip, ErrorState, Skeleton } from '@/components/ui';
 import { SaveMealButton } from '@/features/account/save-button';
 import { AllergenNotice } from '@/features/meals/components/allergen-notice';
 import { MealImage } from '@/features/meals/components/meal-image';
@@ -128,6 +128,7 @@ function AboutRecipe({ variant }: { variant: MealVariantDetail }) {
 
 export default function MealDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
+  const router = useRouter();
   const { space } = useTheme();
   const meal = useMeal(slug);
   const addRecent = useRecentMeals((s) => s.add);
@@ -176,6 +177,13 @@ export default function MealDetailScreen() {
               </View>
             </View>
 
+            <Button
+              label="Add to plan"
+              variant="secondary"
+              onPress={() =>
+                router.push({ pathname: '/plan/schedule', params: { slug: data.slug, name: data.name, slots: data.slots.join(',') } })
+              }
+            />
             <SaveMealButton slug={data.slug} />
 
             {data.variants.length > 1 ? (

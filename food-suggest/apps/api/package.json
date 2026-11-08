@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed/index.ts",
     "fdc:fetch": "tsx scripts/fetch-fdc.ts",
+    "photos:upload": "tsx scripts/upload-meal-photos.ts",
     "wafct:extract": "python3 -I scripts/extract_wafct.py",
     "db:dev": "prisma dev --name food-suggest",
     "db:setup": "prisma migrate dev && prisma generate && tsx prisma/seed/index.ts",

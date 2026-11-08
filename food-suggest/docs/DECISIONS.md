@@ -2,6 +2,26 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-08 — Milestone 6a (hardening without paid accounts)
+
+- **M6 split:** M6a is everything that needs no paid account; M6b (Apple Developer, Play
+  Console, hosting, production email, store testing) waits until the owner is ready to pay.
+- **Own photo storage:** a public Supabase Storage bucket (free tier), filled by a one-off script.
+  The seed switches to it through `MEAL_PHOTOS_BASE_URL`, so a fresh clone without Supabase still
+  shows the photos from their sources. Credits and licences are unchanged.
+- **Offline:** our own small persister (TanStack `dehydrate` / `hydrate` + AsyncStorage) instead
+  of the two persist-client packages; only catalogue queries and picks are saved, never account
+  data. `@react-native-community/netinfo` (Expo SDK version) drives `onlineManager`. Queries keep
+  the default "online" mode so cached data stays on screen offline; mutations use "always" so
+  they fail fast with a clear message instead of appearing stuck.
+- **Text size:** follow the system setting, but cap display titles (1.4 to 1.6x) and tiny badges
+  so screens stay usable at accessibility sizes; body text grows to 2.5x.
+- **Privacy policy:** one TypeScript source for the in-app page and the public Markdown, kept
+  equal by a test. Plain language; commits to no ads, analytics or tracking, 30-day request logs,
+  immediate account deletion. Owner name and contact are filled in at M6b.
+- **App ID:** `com.agkay.foodsuggest` (owner's choice; permanent once uploaded). Version 0.1.0
+  for testing; `usesNonExemptEncryption: false` (HTTPS only).
+
 ## 2026-11-08 — UI/UX redesign (before M6)
 
 - **Direction** (owner's reference image): charcoal surfaces, one **saffron** accent (#F5B21A),

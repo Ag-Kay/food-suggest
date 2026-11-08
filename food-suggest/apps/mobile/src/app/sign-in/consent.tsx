@@ -1,7 +1,7 @@
 import { Cake, ChefHat, Heart, ShieldCheck, TriangleAlert } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AppText, Card, Icon } from '@/components/ui';
 import { completeSignIn } from '@/features/account/after-sign-in';
@@ -9,6 +9,7 @@ import { giveHealthConsent } from '@/features/account/api';
 import { OptionRow } from '@/features/onboarding/option-row';
 import { StepLayout } from '@/features/onboarding/step-layout';
 import { useTheme } from '@/hooks/use-theme';
+import { minTouchTarget } from '@/theme/tokens';
 
 const WHAT_WE_STORE = [
   { icon: Cake, label: 'Your birth year, goal and diet' },
@@ -72,6 +73,14 @@ export default function ConsentScreen() {
           We never sell your data or use it for advertising. You can withdraw consent or delete your
           account at any time in Profile, and we will delete this information.
         </AppText>
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push('/privacy-policy')}
+          style={{ minHeight: minTouchTarget, justifyContent: 'center', alignSelf: 'flex-start' }}>
+          <AppText variant="subhead" color="link" style={{ fontWeight: '600' }}>
+            Read the privacy policy
+          </AppText>
+        </Pressable>
       </Card>
       <View>
         <OptionRow

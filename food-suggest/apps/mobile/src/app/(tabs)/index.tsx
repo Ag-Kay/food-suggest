@@ -4,7 +4,7 @@ import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import type { MealSlot } from '@food-suggest/shared';
 
-import { AppText, ErrorState, Icon, PressableScale, Screen, SectionHeader, Skeleton } from '@/components/ui';
+import { AppText, ErrorState, Icon, isWaitingForNetwork, OfflineBanner, OfflineState, PressableScale, Screen, SectionHeader, Skeleton } from '@/components/ui';
 import { MealTile } from '@/features/meals/components/meal-card';
 import { MealImage } from '@/features/meals/components/meal-image';
 import { useMealList } from '@/features/meals/queries';
@@ -144,7 +144,9 @@ function PickedForYou() {
           {n}
         </AppText>
       ))}
-      {picks.isPending ? (
+      {isWaitingForNetwork(picks) ? (
+        <OfflineState message="Your picks will appear when you're back online." />
+      ) : picks.isPending ? (
         <Carousel>
           {[0, 1].map((i) => (
             <Skeleton key={i} style={{ width: cardWidth, height: cardWidth * 1.15 }} />
@@ -219,6 +221,7 @@ export default function HomeScreen() {
           </AppText>
           <AppText variant="display">What would you like to eat?</AppText>
         </View>
+        <OfflineBanner />
         <SearchShortcut />
       </View>
 
@@ -230,7 +233,9 @@ export default function HomeScreen() {
 
       <View style={{ gap: space.md }}>
         <SectionHeader title="Popular" onAction={() => router.navigate('/discover')} />
-        {popular.isError ? (
+        {isWaitingForNetwork(popular) ? (
+          <OfflineState message="Popular meals will appear when you're back online." />
+        ) : popular.isError ? (
           <ErrorState message={popular.error.message} onRetry={() => popular.refetch()} />
         ) : (
           <Carousel>

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MealSlot, type MealCard } from '@food-suggest/shared';
 
-import { AppText, Chip, EmptyState, ErrorState, Icon, PressableScale, SearchField, Skeleton } from '@/components/ui';
+import { AppText, Chip, EmptyState, ErrorState, Icon, isWaitingForNetwork, OfflineState, PressableScale, SearchField, Skeleton } from '@/components/ui';
 import { MealImage } from '@/features/meals/components/meal-image';
 import { macroLine } from '@/features/meals/components/meal-card';
 import { useMealList } from '@/features/meals/queries';
@@ -66,7 +66,9 @@ export default function PickMeal() {
           </View>
         }
         ListEmptyComponent={
-          list.isPending ? (
+          isWaitingForNetwork(list) ? (
+            <OfflineState />
+          ) : list.isPending ? (
             <View style={{ gap: space.sm }}>
               {[0, 1, 2, 3].map((i) => (
                 <Skeleton key={i} style={{ height: 80 }} />

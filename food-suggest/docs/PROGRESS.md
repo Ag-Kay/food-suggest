@@ -13,7 +13,8 @@
 | M5 | Meal planning + shopping lists (on the phone) | ✅ Done (2026-11-08) |
 | M5b | Sync plans and shopping lists to the account | ✅ Built (2026-11-08) — needs a two-phone test |
 | UI | Redesign: saffron + charcoal, food photos, Lucide icons, Fraunces | ✅ Done (2026-11-08) — browser-checked, phone check pending |
-| M6 | Hardening: accessibility, offline, privacy policy, TestFlight / Play testing | Pending |
+| M6a | Hardening, no paid accounts: accessibility, offline, own photo storage, privacy policy, release config | ✅ Built (2026-11-08) — two-phone sync test and on-device accessibility check pending |
+| M6b | Store testing, needs paid accounts: Apple Developer + Play Console, hosted API and production email, EAS builds, TestFlight / Play internal testing (M4b can follow) | Pending |
 | v1.1 | AI explanations and alternatives (Groq) | Pending |
 
 ## M0 — what exists
@@ -122,9 +123,50 @@
 - Photos for all 15 meals with credits (`prisma/seed/images.ts`; rerun `pnpm db:seed`).
 - Checked in the browser at phone size in light and dark mode. Not yet checked on a device.
 
+## M6a — what exists
+
+- **Photos:** all 15 copied to a public Supabase Storage bucket `meal-photos`
+  (`pnpm --filter @food-suggest/api photos:upload`, skips ones already there). With
+  `MEAL_PHOTOS_BASE_URL` set the seed points meals at our copies; unused photo rows are removed.
+- **Offline:** meal lists, meal pages, ingredients and picks are saved on the phone
+  (`lib/query-persist.ts`: up to 80 queries, 7 days, versioned; account data never saved) and
+  restored at start-up. NetInfo tells TanStack Query when the phone is offline, so cached screens
+  stay up, uncached ones say "You're offline" and load on reconnect. Home and Discover show an
+  offline banner. Actions (save a meal, make a list) fail straight away with a clear message.
+  Sync waits while offline and runs as soon as the phone is back online.
+- **Accessibility:** contrast test for every text colour pairing in both themes (WCAG AA,
+  `theme/contrast.test.ts`); every button and field has a role and spoken label; text follows
+  the phone's text size (big titles stop growing at 1.4 to 1.6x, other text at 2.5x); press
+  animations respect Reduce Motion. Sign-in back buttons now use the readable saffron shade.
+- **Privacy policy:** one source (`features/legal/privacy-policy.ts`) shown in the app (Profile,
+  "Your data" page, sign-in consent) and as `docs/PRIVACY_POLICY.md` for the store listing; a
+  test keeps them identical (`pnpm --filter @food-suggest/mobile policy:write` regenerates).
+  Owner name and contact email are placeholders until M6b.
+- **Release config:** app ID `com.agkay.foodsuggest` (iOS and Android), version 0.1.0, build 1,
+  no non-exempt encryption, phone only; placeholder icon (Lucide soup bowl on saffron), adaptive
+  and monochrome Android icons, light and dark splash; `eas.json` with preview and production.
+- Checked in the browser at phone size: offline banner, offline meal page, reload on reconnect,
+  privacy policy, photos from our storage.
+
+### Still to do for M6a (needs your phone)
+
+- **Two-phone sync test:** sign in on two devices (or phone + browser), plan a meal and tick a
+  list item on one, confirm it appears on the other after reopening; delete on one, confirm it
+  disappears; turn on airplane mode, make a change, turn it off, confirm it syncs.
+- **On-device accessibility:** VoiceOver / TalkBack through each tab, and the largest text size
+  (no Xcode on this Mac, so this couldn't be automated).
+
+### M6b checklist (needs paid accounts)
+
+- Fill in the policy owner and contact email, publish `docs/PRIVACY_POLICY.md` at a public URL.
+- Host the API and Postgres; keep request logs no longer than 30 days (the policy says so).
+- Production email for sign-in codes (replace Gmail SMTP).
+- Apple Developer + Play Console, EAS builds, TestFlight / internal testing, privacy labels
+  (Apple) and Data safety form (Play) using the policy.
+- Crash reporting.
+
 ## Known gaps / to do
 
-- **Before launch:** copy meal photos to our own storage/CDN; keep the credits.
 - Count-only shopping amounts show a bare number ("1" lemon); consider "1 ×" or units per item.
 
 - Sync is whole-state per request (fine for one person's data); shopping lists merge as whole
@@ -142,10 +184,6 @@
 - All 15 recipes need review by a cook / nutritionist (`recipeReviewed = false`).
 - Shito and waakye leaves have no composition data (both optional, excluded from totals).
 - Curry powder and stock cubes: allergen content is brand-dependent (`allergensReviewed = false`).
-- No meal images yet (`imageUrl` is null).
-- No database integration tests yet (repository is exercised manually); add a test database in M3.
-- Mobile unit tests (jest-expo + React Native Testing Library) — set up with the first
-  real logic in M2.
-- App icon and splash are still Expo placeholders; need brand assets.
-- iOS bundle identifier / Android package name not set yet — choose before the first EAS build.
+- App icon is a placeholder (Lucide soup bowl); a designed icon would be better before launch.
+- Re-check each photo's source page for licence changes before launch.
 - Web is not a target; the native-tabs layout is not tuned for web.

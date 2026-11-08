@@ -11,7 +11,7 @@ export default function SignInLayout() {
         headerShadowVisible: false,
         headerTransparent: false,
         headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.primary,
+        headerTintColor: colors.link,
         headerBackButtonDisplayMode: 'minimal',
       }}
     />

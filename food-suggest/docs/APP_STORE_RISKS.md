@@ -6,7 +6,7 @@ Living list. Status: ⚠️ open, ✅ addressed, 📝 note.
 |---|---|---|---|
 | Apple 4.8 | Google sign-in requires Sign in with Apple (or equivalent) | Email only for now; Apple + Google ship together in M4b | ✅ for now / ⚠️ M4b |
 | Apple 5.1.1(v) | Apps with accounts must offer in-app account deletion | `DELETE /v1/me` + Profile → Delete my account | ✅ built, verify on device |
-| Apple 5.1.1 / 5.1.2 | Privacy policy, data minimisation, privacy nutrition labels | Optional fields, birth year only, privacy policy before TestFlight | ⚠️ M6 |
+| Apple 5.1.1 / 5.1.2 | Privacy policy, data minimisation, privacy nutrition labels | Optional fields, birth year only; policy written (in app + `docs/PRIVACY_POLICY.md`); owner, contact and public URL in M6b | ✅ drafted / ⚠️ M6b |
 | Apple 1.4.1 | Health apps: no medical claims; inaccurate data can harm | Disclaimer on Home and meal details; nutrition labelled "estimated" | 📝 disclaimer drafted |
 | Apple 4.2 | Minimum functionality — too little content looks like a demo | Launch with enough curated meals (target 60+) | ⚠️ M1 |
 | Apple 3.1.1 | Premium features must use in-app purchase | Use StoreKit / Play Billing when premium arrives | 📝 future |
@@ -21,4 +21,5 @@ Living list. Status: ⚠️ open, ✅ addressed, 📝 note.
 
 Meal photos come from Wikimedia Commons (CC BY 2.0 / CC BY-SA 4.0: attribution required),
 Unsplash and Pexels (free licences). Credits appear on each meal page and on Profile → Photo
-credits. Before launch: host copies ourselves and re-check each photo page for licence changes.
+credits. Copies are hosted in our Supabase Storage since M6a. Before launch: re-check each photo
+page for licence changes.

@@ -28,7 +28,8 @@ export function DayNutrition({ slugs }: { slugs: string[] }) {
   const results = useQueries({ queries: unique.map((slug) => ({ ...mealDetailQuery(slug), staleTime: 10 * 60_000 })) });
 
   if (!slugs.length) return null;
-  const loading = results.some((r) => r.isPending);
+  const offline = results.some((r) => r.isPending && r.fetchStatus === 'paused');
+  const loading = !offline && results.some((r) => r.isPending);
   const details = new Map(unique.map((slug, i) => [slug, results[i]?.data]));
   const day = sumDayNutrition(slugs, details);
   const g = (n: number) => `${Math.round(n)}g`;
@@ -41,7 +42,9 @@ export function DayNutrition({ slugs }: { slugs: string[] }) {
           One person · estimated
         </AppText>
       </View>
-      {loading ? (
+      {offline ? (
+        <AppText color="textSecondary">The day total will show when you&apos;re back online.</AppText>
+      ) : loading ? (
         <AppText color="textSecondary">Adding it up…</AppText>
       ) : day.counted === 0 ? (
         <AppText color="textSecondary">No nutrition data for these meals yet.</AppText>

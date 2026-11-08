@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { MealDetail, MealVariantDetail } from '@food-suggest/shared';
 
-import { AppText, Badge, Button, Chip, ErrorState, Icon, IconButton, Segmented, Skeleton, type LucideIcon } from '@/components/ui';
+import { AppText, Badge, Button, Chip, ErrorState, Icon, IconButton, isWaitingForNetwork, OfflineState, Segmented, Skeleton, type LucideIcon } from '@/components/ui';
 import { AllergenNotice } from '@/features/meals/components/allergen-notice';
 import { FavoriteButton } from '@/features/meals/components/favorite-button';
 import { MealImage } from '@/features/meals/components/meal-image';
@@ -82,7 +82,7 @@ function Steps({ steps }: { steps: string[] }) {
       {steps.map((step, idx) => (
         <View key={idx} style={{ flexDirection: 'row', gap: space.md }} accessible accessibilityLabel={`Step ${idx + 1}. ${step}`}>
           <View style={{ width: 30, height: 30, borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <AppText variant="footnote" style={{ color: colors.onPrimary, fontWeight: '700' }}>
+            <AppText variant="footnote" maxFontSizeMultiplier={1.3} style={{ color: colors.onPrimary, fontWeight: '700' }}>
               {idx + 1}
             </AppText>
           </View>
@@ -194,7 +194,11 @@ export default function MealDetailScreen() {
           const past = e.nativeEvent.contentOffset.y > heroHeight - insets.top - 72;
           if (past !== pastHero) setPastHero(past);
         }}>
-        {meal.isPending ? (
+        {isWaitingForNetwork(meal) ? (
+          <View style={{ paddingTop: insets.top + 64, paddingHorizontal: layout.gutter }}>
+            <OfflineState message="This meal isn't saved on your phone yet. It will load when you're back online." />
+          </View>
+        ) : meal.isPending ? (
           <View accessibilityLabel="Loading meal">
             <Skeleton style={{ height: heroHeight, borderRadius: 0 }} />
             <View style={{ padding: layout.gutter, gap: space.lg }}>

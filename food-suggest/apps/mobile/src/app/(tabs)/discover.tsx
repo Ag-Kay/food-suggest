@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MealSlot } from '@food-suggest/shared';
 
-import { AppText, Chip, EmptyState, ErrorState, Icon, IconButton, PressableScale, SearchField } from '@/components/ui';
+import { AppText, Chip, EmptyState, ErrorState, Icon, IconButton, isWaitingForNetwork, OfflineBanner, OfflineState, PressableScale, SearchField } from '@/components/ui';
 import { MealGrid } from '@/features/meals/components/meal-grid';
 import { sheetFilterCount, useDiscoverFilters } from '@/features/meals/discover-filters';
 import { useCuisines, useMealList, type MealFilters } from '@/features/meals/queries';
@@ -60,6 +60,9 @@ export default function DiscoverScreen() {
 
   const header = (
     <View style={{ gap: space.lg, paddingBottom: space.xl }}>
+      <View style={{ paddingHorizontal: layout.gutter }}>
+        <OfflineBanner />
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Meal type" contentContainerStyle={{ gap: space.sm, paddingHorizontal: layout.gutter }}>
         {MealSlot.options.map((s) => (
           <Chip key={s} label={SLOT_LABELS[s]} icon={SLOT_ICONS[s]} selected={f.slot === s} onPress={() => f.set({ slot: f.slot === s ? undefined : s })} />
@@ -101,7 +104,7 @@ export default function DiscoverScreen() {
                 <View
                   pointerEvents="none"
                   style={{ position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: radius.pill, backgroundColor: colors.text, alignItems: 'center', justifyContent: 'center' }}>
-                  <AppText variant="caption" style={{ color: colors.background, fontSize: 11 }}>
+                  <AppText variant="caption" maxFontSizeMultiplier={1.2} style={{ color: colors.background, fontSize: 11 }}>
                     {sheetCount}
                   </AppText>
                 </View>
@@ -113,13 +116,15 @@ export default function DiscoverScreen() {
 
       <MealGrid
         meals={meals.data?.items ?? []}
-        loading={meals.isPending}
+        loading={meals.isPending && !isWaitingForNetwork(meals)}
         dimmed={meals.isPlaceholderData}
         header={header}
         refreshing={meals.isRefetching && !meals.isPlaceholderData}
         onRefresh={() => void meals.refetch()}
         empty={
-          meals.isError ? (
+          isWaitingForNetwork(meals) ? (
+            <OfflineState />
+          ) : meals.isError ? (
             <ErrorState message={meals.error.message} onRetry={() => meals.refetch()} />
           ) : (
             <EmptyState

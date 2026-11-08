@@ -1,3 +1,4 @@
+import { onlineManager } from '@tanstack/react-query';
 import { create } from 'zustand';
 
 import type { SyncResponse } from '@food-suggest/shared';
@@ -18,6 +19,8 @@ interface SyncStatus {
 
 /** In memory only: shown on the Profile screen. */
 export const useSyncStatus = create<SyncStatus>(() => ({ lastSyncedAt: null, error: null }));
+
+export const OFFLINE_MESSAGE = "You're offline. Your plan and lists will sync when you're back online.";
 
 let running: Promise<void> | null = null;
 let again = false;
@@ -51,6 +54,10 @@ export function syncNow(): Promise<void> {
 async function syncOnce(): Promise<void> {
   const userId = useAuth.getState().session?.user.id;
   if (!userId) return;
+  if (!onlineManager.isOnline()) {
+    useSyncStatus.setState({ error: OFFLINE_MESSAGE });
+    return;
+  }
 
   let response: SyncResponse;
   try {
@@ -63,7 +70,9 @@ async function syncOnce(): Promise<void> {
     const message =
       err instanceof ApiRequestError && err.code === 'SYNC_LIMIT'
         ? err.message
-        : "Couldn't sync your plan and lists. We'll try again.";
+        : !onlineManager.isOnline()
+          ? OFFLINE_MESSAGE
+          : "Couldn't sync your plan and lists. We'll try again.";
     useSyncStatus.setState({ error: message });
     if (__DEV__) console.warn('[sync] failed', err);
     return;

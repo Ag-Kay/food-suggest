@@ -16,7 +16,7 @@ import { createDb } from '../../src/lib/db.js';
 import { calculateVariantNutrition, type NutrientsPer100g } from '../../src/modules/nutrition/calculator.js';
 import { CATEGORIES, CUISINES, SOURCES } from './catalogue.js';
 import { INGREDIENTS, type IngredientSeed } from './ingredients.js';
-import { MEAL_IMAGES } from './images.js';
+import { MEAL_IMAGES, photoUrl } from './images.js';
 import { MEALS } from './meals.js';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), 'data');
@@ -166,8 +166,9 @@ async function main() {
     const photo = MEAL_IMAGES[meal.slug];
     let imageId: string | null = null;
     if (photo) {
+      const storageKey = photoUrl(meal.slug, photo);
       const imageData = {
-        storageKey: photo.url,
+        storageKey,
         width: photo.width,
         height: photo.height,
         altText: photo.alt,
@@ -175,7 +176,7 @@ async function main() {
         license: photo.license,
         sourceUrl: photo.sourceUrl,
       };
-      const image = await db.image.upsert({ where: { storageKey: photo.url }, create: imageData, update: imageData });
+      const image = await db.image.upsert({ where: { storageKey }, create: imageData, update: imageData });
       imageId = image.id;
     } else {
       problems.push(`${meal.slug}: no photo`);
@@ -262,6 +263,9 @@ async function main() {
     }
   }
   console.log(`✓ ${MEALS.length} meals`);
+  // Photos that moved (e.g. to our own storage) leave their old rows behind.
+  const orphans = await db.image.deleteMany({ where: { meals: { none: {} } } });
+  if (orphans.count) console.log(`✓ removed ${orphans.count} unused photo rows`);
   if (problems.length) {
     console.warn('Variants without nutrition:\n  ' + problems.join('\n  '));
     process.exitCode = 1;

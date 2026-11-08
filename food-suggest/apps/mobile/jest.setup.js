@@ -2,6 +2,7 @@
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+jest.mock('@react-native-community/netinfo', () => require('@react-native-community/netinfo/jest/netinfo-mock.js'));
 
 // Reanimated needs a device runtime; tests only need components to render.
 // Covers the API the app uses (press feedback and layout animations).

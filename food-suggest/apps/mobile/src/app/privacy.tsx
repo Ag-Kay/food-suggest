@@ -1,7 +1,8 @@
 import { CloudUpload, Smartphone, Trash2, UserRoundCheck } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
-import { AppText, Icon, Screen, type LucideIcon } from '@/components/ui';
+import { AppText, Button, Icon, Screen, type LucideIcon } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 
 function Point({ icon, title, body }: { icon: LucideIcon; title: string; body: string }) {
@@ -19,9 +20,10 @@ function Point({ icon, title, body }: { icon: LucideIcon; title: string; body: s
   );
 }
 
-/** Plain-language summary of where data lives (the full privacy policy comes with M6). */
+/** Plain-language summary of where data lives, with a link to the full privacy policy. */
 export default function PrivacyScreen() {
   const { space } = useTheme();
+  const router = useRouter();
   return (
     <Screen edges={['left', 'right']} gap={space.xl}>
       <Point
@@ -44,6 +46,7 @@ export default function PrivacyScreen() {
         title="You're in control"
         body="Clear this phone's data in Profile at any time, or delete your account and everything in it."
       />
+      <Button label="Read the full privacy policy" variant="secondary" onPress={() => router.push('/privacy-policy')} />
     </Screen>
   );
 }

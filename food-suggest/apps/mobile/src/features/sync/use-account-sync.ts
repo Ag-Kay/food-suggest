@@ -1,3 +1,4 @@
+import { onlineManager } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
@@ -12,7 +13,7 @@ const DEBOUNCE_MS = 2000;
 /**
  * While signed in, keeps the meal plan and shopping lists in step with the account:
  * on sign-in (this also moves anything planned before signing in into the account),
- * when the app comes back to the foreground, and shortly after each local change.
+ * when the app comes back to the foreground or back online, and shortly after each local change.
  */
 export function useAccountSync() {
   const signedIn = useIsSignedIn();
@@ -29,6 +30,9 @@ export function useAccountSync() {
     };
     const stopPlan = useMealPlan.subscribe(schedule);
     const stopLists = useShoppingLists.subscribe(schedule);
+    const stopOnline = onlineManager.subscribe((online) => {
+      if (online) void syncNow();
+    });
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') void syncNow();
     });
@@ -37,6 +41,7 @@ export function useAccountSync() {
       clearTimeout(timer);
       stopPlan();
       stopLists();
+      stopOnline();
       appState.remove();
     };
   }, [signedIn]);

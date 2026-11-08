@@ -1,3 +1,5 @@
+import { onlineManager } from '@tanstack/react-query';
+
 import type { SyncRequest, SyncResponse } from '@food-suggest/shared';
 
 import { apiPost } from '@/lib/api';
@@ -5,7 +7,7 @@ import { useAuth } from '@/stores/auth';
 import { useMealPlan } from '@/stores/meal-plan';
 import { useShoppingLists } from '@/stores/shopping-lists';
 
-import { syncNow, useSyncStatus } from './engine';
+import { OFFLINE_MESSAGE, syncNow, useSyncStatus } from './engine';
 
 jest.mock('@/lib/api', () => {
   const actual = jest.requireActual('@/lib/api');
@@ -87,5 +89,17 @@ describe('syncNow', () => {
     });
     await syncNow();
     expect(useMealPlan.getState().entries).toEqual([]);
+  });
+
+  it('waits while offline and says so, without calling the API', async () => {
+    signIn('user-1');
+    onlineManager.setOnline(false);
+    try {
+      await syncNow();
+      expect(post).not.toHaveBeenCalled();
+      expect(useSyncStatus.getState().error).toBe(OFFLINE_MESSAGE);
+    } finally {
+      onlineManager.setOnline(true);
+    }
   });
 });

@@ -8,8 +8,9 @@
  * - Unsplash: Unsplash License (free, attribution appreciated; we credit anyway).
  * - Pexels: Pexels License (free, attribution appreciated; we credit anyway).
  *
- * Images are loaded from the source's CDN for now (sized thumbnails). Before launch, copy them
- * to our own storage and point `url` there (tracked in docs/PROGRESS.md, M6).
+ * `url` is the source's sized thumbnail. `pnpm photos:upload` copies each one to our Supabase
+ * Storage bucket; with MEAL_PHOTOS_BASE_URL set, the seed points meals at those copies instead
+ * (see `photoUrl`). Credits and licences are unchanged either way.
  */
 export interface MealImageSeed {
   url: string;
@@ -163,3 +164,8 @@ export const MEAL_IMAGES: Record<string, MealImageSeed> = {
     sourceUrl: 'https://www.pexels.com/photo/delicious-spaghetti-in-tomato-sauce-close-up-31637791/',
   },
 };
+
+/** Where the app loads a meal's photo: our own storage when configured, else the source. */
+export function photoUrl(slug: string, photo: MealImageSeed, baseUrl = process.env.MEAL_PHOTOS_BASE_URL): string {
+  return baseUrl ? `${baseUrl.replace(/\/+$/, '')}/${slug}.jpg` : photo.url;
+}

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Heart } from 'lucide-react-native';
 import { View } from 'react-native';
 
-import { EmptyState, ErrorState } from '@/components/ui';
+import { EmptyState, ErrorState, isWaitingForNetwork, OfflineState } from '@/components/ui';
 import { useFavorites } from '@/features/account/api';
 import { MealGrid } from '@/features/meals/components/meal-grid';
 import { useTheme } from '@/hooks/use-theme';
@@ -16,12 +16,14 @@ export default function FavoritesScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <MealGrid
         meals={favorites.data?.items ?? []}
-        loading={favorites.isPending}
+        loading={favorites.isPending && !isWaitingForNetwork(favorites)}
         header={<View style={{ height: space.lg }} />}
         refreshing={favorites.isRefetching}
         onRefresh={() => void favorites.refetch()}
         empty={
-          favorites.isError ? (
+          isWaitingForNetwork(favorites) ? (
+            <OfflineState message="Your saved meals will appear when you're back online." />
+          ) : favorites.isError ? (
             <ErrorState message={favorites.error.message} onRetry={() => favorites.refetch()} />
           ) : (
             <EmptyState

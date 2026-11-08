@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query';
 import { ExternalLink } from 'lucide-react-native';
 import { Linking, Pressable, View } from 'react-native';
 
-import { AppText, Icon, Screen, Skeleton } from '@/components/ui';
+import { AppText, Icon, isWaitingForNetwork, OfflineState, Screen, Skeleton } from '@/components/ui';
 import { MealImage } from '@/features/meals/components/meal-image';
 import { mealDetailQuery, useMealList } from '@/features/meals/queries';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,7 +20,9 @@ export default function CreditsScreen() {
       <AppText color="textSecondary">
         Food photos are used under their licences. Tap a credit to see the original.
       </AppText>
-      {list.isPending ? (
+      {isWaitingForNetwork(list) ? (
+        <OfflineState />
+      ) : list.isPending ? (
         <Skeleton style={{ height: 300 }} />
       ) : (
         <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: space.lg }}>

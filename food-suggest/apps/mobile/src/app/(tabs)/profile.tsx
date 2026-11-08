@@ -6,6 +6,7 @@ import {
   ChefHat,
   CloudUpload,
   Eraser,
+  FileText,
   Flame,
   Heart,
   Images,
@@ -251,6 +252,7 @@ export default function ProfileScreen() {
 
       <ListGroup title="Privacy & data">
         <ListRow icon={ShieldCheck} label="How your data is used" onPress={() => router.push('/privacy')} />
+        <ListRow icon={FileText} label="Privacy policy" onPress={() => router.push('/privacy-policy')} />
         <ListRow
           icon={Eraser}
           label="Clear data on this phone"

@@ -7,6 +7,7 @@
     "@expo/ui": "~58.0.27",
     "@food-suggest/shared": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/netinfo": "12.0.1",
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.106.1",
     "aes-js": "^3.1.2",
@@ -58,6 +59,7 @@
     "web": "expo start --web",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
+    "policy:write": "WRITE_POLICY=1 jest src/features/legal",
     "test": "jest"
   },
   "private": true,

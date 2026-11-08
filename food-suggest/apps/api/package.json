@@ -18,15 +18,18 @@
     "fdc:fetch": "tsx scripts/fetch-fdc.ts",
     "wafct:extract": "python3 -I scripts/extract_wafct.py",
     "db:dev": "prisma dev --name food-suggest",
-    "db:setup": "prisma migrate dev && prisma generate && tsx prisma/seed/index.ts"
+    "db:setup": "prisma migrate dev && prisma generate && tsx prisma/seed/index.ts",
+    "test:db": "RUN_DB_TESTS=1 vitest run account.repository.db"
   },
   "dependencies": {
     "@food-suggest/shared": "workspace:*",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "^7.10.1",
+    "@supabase/supabase-js": "^2.119.0",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.3",
     "helmet": "^8.3.0",
+    "jose": "^6.2.15",
     "pg": "8.23.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",

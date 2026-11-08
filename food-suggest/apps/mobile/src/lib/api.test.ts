@@ -59,3 +59,29 @@ describe('apiGet', () => {
     expect(err.code).toBe('TIMEOUT');
   });
 });
+
+describe('authenticated requests', () => {
+  const base = { baseUrl: 'http://api' };
+
+  it('sends the bearer token and the chosen method', async () => {
+    const fetchImpl = jest.fn(async (_url: string, _init?: RequestInit) => ({ ok: true, status: 204, json: async () => ({}) }) as unknown as Response);
+    await apiGet('/me/favorites/waakye', { ...base, fetchImpl: fetchImpl as unknown as typeof fetch, auth: true, method: 'PUT', getToken: async () => 'tok' });
+    const init = fetchImpl.mock.calls[0]![1]!;
+    expect(init.method).toBe('PUT');
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok');
+  });
+
+  it('never sends a token unless asked', async () => {
+    const fetchImpl = jest.fn(async (_url: string, _init?: RequestInit) => ok({}));
+    await apiGet('/meals', { ...base, fetchImpl: fetchImpl as unknown as typeof fetch, getToken: async () => 'tok' });
+    expect((fetchImpl.mock.calls[0]![1]!.headers as Record<string, string>).Authorization).toBeUndefined();
+  });
+
+  it('fails fast with 401 when signed out', async () => {
+    const fetchImpl = jest.fn();
+    const err = await failure(apiGet('/me', { ...base, fetchImpl, auth: true, getToken: async () => null }));
+    expect(err.status).toBe(401);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+

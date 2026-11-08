@@ -9,6 +9,10 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   DATABASE_URL: z.url().optional(),
+  /** e.g. https://abcd.supabase.co — enables sign-in routes. */
+  SUPABASE_URL: z.url().optional(),
+  /** Server-only secret key (sb_secret_...), used to delete auth users. Never ship to the app. */
+  SUPABASE_SECRET_KEY: z.string().min(20).optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

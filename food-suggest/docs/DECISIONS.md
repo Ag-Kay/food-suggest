@@ -2,6 +2,31 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-07 — Milestone 4 (accounts)
+
+- **Email 6-digit code sign-in via Supabase Auth** in this milestone (works in Expo Go).
+  **Apple and Google moved to M4b**: Google needs a development build and Google Cloud setup, Apple
+  needs an Apple Developer account, and App Review 4.8 requires Apple sign-in whenever Google is
+  offered, so they ship together.
+- **Token verification in our API** with `jose` against the project's JWKS: issuer
+  `${SUPABASE_URL}/auth/v1`, audience `authenticated`, ES256/RS256 only, role `authenticated`,
+  UUID `sub`, anonymous Supabase users rejected. The secret key is used only for deleting users.
+- **Session storage on the phone:** Supabase's "LargeSecureStore" pattern. A fresh AES-256 key
+  per write lives in SecureStore (Keychain/Keystore), the AES-CTR ciphertext in AsyncStorage.
+  Random bytes come from `expo-crypto` (in Expo Go) instead of `react-native-get-random-values`.
+- **Explicit consent before storing health-related data** (`Consent`, versioned with
+  `HEALTH_DATA_CONSENT_VERSION`). Without consent, an account still works for saved meals, but the
+  profile stays on the phone. Withdrawing consent deletes the stored profile.
+- **Claiming:** after sign-in, an account without a profile receives the phone's answers; an account
+  that already has one wins and is copied to the phone (simple and predictable across devices).
+- **Every `/v1/me` route takes the user id from the verified token only**; strict schemas reject
+  smuggled fields. Data isolation is tested in-memory and against the real database (`pnpm test:db`).
+- **Account deletion** (App Review 5.1.1(v)): delete all rows (cascades), then the Supabase auth
+  user; failures return an error so the user can retry. Sign-out and deletion also clear this
+  phone's personal data.
+- Account routes are mounted only when `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are set; the app hides
+  sign-in when `EXPO_PUBLIC_SUPABASE_*` are missing. Both keep working in anonymous mode.
+
 ## 2026-11-07 — Milestone 3 (onboarding + recommendations)
 
 - **Onboarding is optional and on-device.** Home invites the user; nothing is forced. Answers live

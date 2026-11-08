@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './config';
+import { getAccessToken } from './supabase';
 
 /** An API failure with a user-presentable message. */
 export class ApiRequestError extends Error {
@@ -21,8 +22,13 @@ type Query = Record<string, string | number | undefined | null>;
 
 export interface ApiGetOptions {
   query?: Query;
-  /** JSON body; switches the request to POST. */
+  /** JSON body; switches the request to POST unless `method` is given. */
   body?: unknown;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  /** Send the signed-in user's access token. Fails with 401 if signed out. */
+  auth?: boolean;
+  /** Override token lookup (tests). */
+  getToken?: () => Promise<string | null>;
   signal?: AbortSignal;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -39,7 +45,20 @@ export function buildUrl(baseUrl: string, path: string, query: Query = {}): stri
 
 /** GET by default; POST when `body` is given. */
 export async function apiGet<T>(path: string, options: ApiGetOptions = {}): Promise<T> {
-  const { query, body, signal, timeoutMs = 15_000, fetchImpl = fetch, baseUrl = getApiBaseUrl() } = options;
+  const {
+    query,
+    body,
+    signal,
+    method = body === undefined ? 'GET' : 'POST',
+    auth = false,
+    getToken = getAccessToken,
+    timeoutMs = 15_000,
+    fetchImpl = fetch,
+    baseUrl = getApiBaseUrl(),
+  } = options;
+
+  const token = auth ? await getToken() : null;
+  if (auth && !token) throw new ApiRequestError('Please sign in to continue.', 401, 'UNAUTHORIZED');
 
   // Built by hand: React Native's AbortSignal may lack timeout()/any().
   const controller = new AbortController();
@@ -54,10 +73,11 @@ export async function apiGet<T>(path: string, options: ApiGetOptions = {}): Prom
   let res: Response;
   try {
     res = await fetchImpl(buildUrl(baseUrl, path, query), {
-      method: body === undefined ? 'GET' : 'POST',
+      method,
       headers: {
         Accept: 'application/json',
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
@@ -87,10 +107,12 @@ export async function apiGet<T>(path: string, options: ApiGetOptions = {}): Prom
       // Non-JSON error body: keep the generic message.
     }
     if (res.status === 404) message = "We couldn't find that.";
+    if (res.status === 401) message = 'Your session has expired. Please sign in again.';
     if (res.status === 429) message = 'Too many requests. Please wait a moment and try again.';
     throw new ApiRequestError(message, res.status, code);
   }
 
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 

@@ -5,6 +5,10 @@ import { useState } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
 import { createQueryClient } from '@/lib/query-client';
+import { startAuthListener } from '@/stores/auth';
+import { useProfileSync } from '@/features/account/use-profile-sync';
+
+startAuthListener();
 
 export default function RootLayout() {
   const { scheme, colors } = useTheme();
@@ -13,6 +17,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ProfileSync />
       <ThemeProvider
         value={{
           ...base,
@@ -30,8 +35,15 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="meal/[slug]" options={{ title: '' }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="sign-in" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="favorites" options={{ title: 'Saved meals' }} />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+function ProfileSync() {
+  useProfileSync();
+  return null;
 }

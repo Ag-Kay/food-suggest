@@ -5,6 +5,7 @@ import { ScrollView, View } from 'react-native';
 import type { MealVariantDetail } from '@food-suggest/shared';
 
 import { AppText, Badge, Card, Chip, ErrorState, Skeleton } from '@/components/ui';
+import { SaveMealButton } from '@/features/account/save-button';
 import { AllergenNotice } from '@/features/meals/components/allergen-notice';
 import { MealImage } from '@/features/meals/components/meal-image';
 import { NutritionPanel } from '@/features/meals/components/nutrition-panel';
@@ -174,6 +175,8 @@ export default function MealDetailScreen() {
                 {variant.diet !== 'OMNIVORE' ? <Badge label={DIET_LABELS[variant.diet]} tone="primary" /> : null}
               </View>
             </View>
+
+            <SaveMealButton slug={data.slug} />
 
             {data.variants.length > 1 ? (
               <View style={{ gap: space.sm }}>

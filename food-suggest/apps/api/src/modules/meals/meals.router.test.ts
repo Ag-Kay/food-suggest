@@ -14,6 +14,7 @@ function fakeRepo(): MealsRepository {
     list: vi.fn(async (q) => ({ items: [], total: 0, limit: q.limit, offset: q.offset })),
     getBySlug: vi.fn(async (slug) => (slug === 'waakye' ? ({ slug: 'waakye' } as MealDetail) : null)),
     listCandidates: vi.fn(async () => []),
+    cardsBySlugs: vi.fn(async () => []),
   };
 }
 

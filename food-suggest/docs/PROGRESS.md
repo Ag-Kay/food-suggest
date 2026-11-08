@@ -8,8 +8,9 @@
 | M1 | Content: ingredient import (WAFCT + USDA), seed meals, nutrition calculator | ✅ Done (2026-11-07) |
 | M2 | Discovery: search, filters, meal details, loading/empty/error states | ✅ Done (2026-11-07) |
 | M3 | Onboarding + rule-based recommendations, allergy test suite | ✅ Done (2026-11-07) |
-| M4 | Auth (email OTP, Apple, Google), claim local data, favourites, account deletion | ⏳ Next |
-| M5 | Meal planning + shopping lists | Pending |
+| M4 | Auth (email code), consent, claim local data, favourites, account deletion | ✅ Done (2026-11-08) — email sign-in tested on a phone |
+| M4b | Sign in with Apple + Google (development build, Apple Developer account, Google Cloud) | Pending |
+| M5 | Meal planning + shopping lists | ⏳ Next |
 | M6 | Hardening: accessibility, offline, privacy policy, TestFlight / Play testing | Pending |
 | v1.1 | AI explanations and alternatives (Groq) | Pending |
 
@@ -63,6 +64,20 @@
 - Checked in the browser at phone size: full onboarding, picks for a vegetarian with a fish
   allergy (shito caution shown), profile editing, under-16 block clearing the profile.
 
+## M4 — what exists
+
+- API: `requireAuth` (Supabase JWKS), `/v1/me` (account), `/v1/me/consents`, `/v1/me/profile`
+  (PUT/DELETE), `/v1/me/claim`, `/v1/me/favorites` (GET/PUT/DELETE), `DELETE /v1/me`; 60/min limit.
+- Tests: token verification (issuer, audience, expiry, anonymous, role, foreign key, unsigned),
+  routes incl. consent, claim, isolation between users, deletion order and retry; database tests
+  for profile round-trip, isolation and cascade deletion (`pnpm --filter @food-suggest/api test:db`).
+- App: email → code → consent → done flow, encrypted session storage, profile sync after consent,
+  Save meal button, Saved meals screen, Account card (sync on/off, sign out, delete account).
+- Tested on a phone (Expo Go) against the real Supabase project on 2026-11-08: email code,
+  consent, and claiming the phone's answers into the account. Email goes through Gmail SMTP (dev
+  only; production needs a domain sender). The code screen submits automatically on the 6th digit
+  (the number pad has no return key); Supabase's "Email OTP length" must stay 6.
+
 ## Known gaps / to do
 
 - Liked/disliked ingredients are supported by the engine but not yet asked in onboarding.
@@ -71,7 +86,6 @@
   `expo start` (or `npx expo customize`) before `tsc` knows new routes. Address in CI setup.
 
 - Save and "Add to plan" buttons arrive with accounts (M4) and meal planning (M5).
-- Not yet checked on a physical device by us (only Expo web); please try on your phone.
 
 - **Launch blocker:** request a commercial licence for WAFCT 2019 from FAO, or move to USDA equivalents.
 - All 15 recipes need review by a cook / nutritionist (`recipeReviewed = false`).
@@ -79,7 +93,6 @@
 - Curry powder and stock cubes: allergen content is brand-dependent (`allergensReviewed = false`).
 - No meal images yet (`imageUrl` is null).
 - No database integration tests yet (repository is exercised manually); add a test database in M3.
-- Supabase project (M4, with auth).
 - Mobile unit tests (jest-expo + React Native Testing Library) — set up with the first
   real logic in M2.
 - App icon and splash are still Expo placeholders; need brand assets.

@@ -17,6 +17,8 @@ export interface MealsRepository {
   getBySlug(slug: string): Promise<MealDetail | null>;
   /** Every published meal's default variant, prepared for the recommendation engine. */
   listCandidates(): Promise<RecommendationCandidate[]>;
+  /** Cards for the given slugs, in the given order (unknown or unpublished slugs are skipped). */
+  cardsBySlugs(slugs: string[]): Promise<MealCard[]>;
 }
 
 const variantInclude = {
@@ -194,6 +196,21 @@ export function createMealsRepository(db: Db): MealsRepository {
           },
         ];
       });
+    },
+
+    async cardsBySlugs(slugs) {
+      if (!slugs.length) return [];
+      const meals = await db.meal.findMany({
+        where: { slug: { in: slugs }, status: 'PUBLISHED' },
+        include: { cuisine: true, variants: { include: variantInclude } },
+      });
+      const bySlug = new Map(
+        meals.flatMap((m) => {
+          const v = pickDefault(m.variants);
+          return v ? [[m.slug, toCard(m, v)] as const] : [];
+        }),
+      );
+      return slugs.flatMap((s) => (bySlug.has(s) ? [bySlug.get(s)!] : []));
     },
 
     async getBySlug(slug) {

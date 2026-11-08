@@ -11,6 +11,7 @@ import { healthRouter } from './modules/health/health.router.js';
 import type { MealsRepository } from './modules/meals/meals.repository.js';
 import { mealsRouter } from './modules/meals/meals.router.js';
 import { recommendationsRouter } from './modules/recommendations/recommendations.router.js';
+import { meRouter, type MeRouterDeps } from './modules/me/me.router.js';
 
 export interface AppDeps {
   logger: Logger;
@@ -19,6 +20,8 @@ export interface AppDeps {
   /** Database-backed features are mounted only when provided (tests can omit them). */
   db?: Db;
   mealsRepo?: MealsRepository;
+  /** Account routes; mounted only when sign-in is configured. */
+  account?: Omit<MeRouterDeps, 'meals'>;
   /** Browser origins allowed to call the API (development only: Expo web). Native apps don't need CORS. */
   corsOrigins?: string[];
 }
@@ -28,6 +31,7 @@ export function createApp({
   rateLimitPerMinute = 120,
   db,
   mealsRepo,
+  account,
   corsOrigins = [],
 }: AppDeps): Express {
   const app = express();
@@ -43,8 +47,8 @@ export function createApp({
       if (origin && corsOrigins.includes(origin)) {
         res.set('Access-Control-Allow-Origin', origin);
         res.set('Vary', 'Origin');
-        res.set('Access-Control-Allow-Methods', 'GET, POST');
-        res.set('Access-Control-Allow-Headers', 'Accept, Content-Type');
+        res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+        res.set('Access-Control-Allow-Headers', 'Accept, Content-Type, Authorization');
         res.set('Cross-Origin-Resource-Policy', 'cross-origin');
         if (req.method === 'OPTIONS') return void res.sendStatus(204);
       }
@@ -84,6 +88,7 @@ export function createApp({
   if (mealsRepo) {
     v1.use('/meals', mealsRouter(mealsRepo));
     v1.use('/recommendations', recommendationsRouter(mealsRepo));
+    if (account) v1.use('/me', meRouter({ ...account, meals: mealsRepo }));
   }
   if (db) v1.use('/', catalogueRouter(db));
   app.use('/v1', v1);

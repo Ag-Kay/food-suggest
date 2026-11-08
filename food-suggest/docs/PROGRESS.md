@@ -11,7 +11,7 @@
 | M4 | Auth (email code), consent, claim local data, favourites, account deletion | ✅ Done (2026-11-08) — email sign-in tested on a phone |
 | M4b | Sign in with Apple + Google (development build, Apple Developer account, Google Cloud) | Pending |
 | M5 | Meal planning + shopping lists (on the phone) | ✅ Done (2026-11-08) |
-| M5b | Sync plans and shopping lists to the account | ⏳ Next |
+| M5b | Sync plans and shopping lists to the account | ✅ Built (2026-11-08) — needs a two-phone test |
 | M6 | Hardening: accessibility, offline, privacy policy, TestFlight / Play testing | Pending |
 | v1.1 | AI explanations and alternatives (Groq) | Pending |
 
@@ -94,9 +94,27 @@
 - Checked in the browser at phone size: adding from the planner and from a meal page, servings,
   day nutrition, making a list, ticking, adding an item, updating from the plan, Home card.
 
+## M5b — what exists
+
+- Database: `PlanEntry` and `ShoppingList` replaced the unused M0 plan/list tables (migration
+  `plan_and_list_sync`); records are keyed by user + phone-made id, with `changedAt` and `deleted`.
+- API: `POST /v1/me/sync` (signed in, 1 MB body limit): newest change wins per record, device clocks
+  capped at server time + 5 min, tombstones kept 60 days, plan days older than 30 days purged,
+  caps of 1000 plan entries and 100 lists. Merge rules are pure functions (`modules/sync/merge.ts`)
+  shared by the database repository and the test fake.
+- App: change times and tombstones in the plan and list stores (stored-data upgrade from M5 tested),
+  sync engine (one sync at a time, re-runs if something changed meanwhile), syncs on sign-in, app
+  foreground and 2 s after each change, last sync before sign-out, status line with "Try again"
+  in Profile. Anything planned before signing in moves into the account on the first sync.
+- Tests: merge rules (API and app), engine (upload, second phone, deletions, offline, sign-out
+  mid-request), routes (isolation, validation, large bodies), database round-trip and cascade
+  (`pnpm --filter @food-suggest/api test:db`, now runs every `*.db.test.ts` one file at a time).
+- **Not yet tested with a real account on two devices.**
+
 ## Known gaps / to do
 
-- Plans and lists aren't synced to the account yet (M5b). Signing out clears them from the phone.
+- Sync is whole-state per request (fine for one person's data); shopping lists merge as whole
+  documents, so ticking items on two phones at the same moment keeps only the newer list.
 - Shopping amounts come from draft recipes (see recipe review below); buying units (e.g. "1 tin of
   tomato paste") aren't modelled.
 

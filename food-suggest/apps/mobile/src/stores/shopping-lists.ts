@@ -6,6 +6,8 @@ import type { GeneratedShoppingItem } from '@food-suggest/shared';
 import type { DateKey } from '@/features/plan/dates';
 import { localId } from '@/lib/local-id';
 
+import { nextChange } from './meal-plan';
+
 import { deviceStorage } from './persist-storage';
 
 export interface ShoppingItem {
@@ -26,6 +28,7 @@ export interface ShoppingList {
   id: string;
   name: string;
   createdAt: number;
+  /** Last local change (ms), used to pick the newest version when syncing. */
   updatedAt: number;
   /** The plan days this list was made from, so it can be updated when the plan changes. */
   fromPlan?: { start: DateKey; end: DateKey };
@@ -53,6 +56,8 @@ export function toShoppingItems(generated: GeneratedShoppingItem[]): ShoppingIte
 
 interface ShoppingListsState {
   lists: ShoppingList[];
+  /** Deleted list ids → deletion time, kept until the account has them. */
+  tombstones: Record<string, number>;
   create: (input: { name: string; fromPlan?: ShoppingList['fromPlan']; items?: ShoppingItem[] }) => ShoppingList;
   rename: (listId: string, name: string) => void;
   remove: (listId: string) => void;
@@ -66,6 +71,7 @@ interface ShoppingListsState {
   toggleItem: (listId: string, itemId: string) => void;
   removeItem: (listId: string, itemId: string) => void;
   clearChecked: (listId: string) => void;
+  /** Empties lists on this phone only (no tombstones: the account keeps its copy). */
   clear: () => void;
 }
 
@@ -75,13 +81,14 @@ export const useShoppingLists = create<ShoppingListsState>()(
     (set) => {
       const edit = (listId: string, change: (list: ShoppingList) => Partial<ShoppingList>) =>
         set((s) => ({
-          lists: s.lists.map((l) => (l.id === listId ? { ...l, ...change(l), updatedAt: Date.now() } : l)),
+          lists: s.lists.map((l) => (l.id === listId ? { ...l, ...change(l), updatedAt: nextChange(l.updatedAt) } : l)),
         }));
       const editItems = (listId: string, change: (items: ShoppingItem[]) => ShoppingItem[]) =>
         edit(listId, (l) => ({ items: change(l.items) }));
 
       return {
         lists: [],
+        tombstones: {},
         create: ({ name, fromPlan, items = [] }) => {
           const now = Date.now();
           const list: ShoppingList = { id: localId(), name: clean(name) || 'Shopping list', createdAt: now, updatedAt: now, fromPlan, items };
@@ -92,7 +99,11 @@ export const useShoppingLists = create<ShoppingListsState>()(
           const value = clean(name);
           if (value) edit(listId, () => ({ name: value }));
         },
-        remove: (listId) => set((s) => ({ lists: s.lists.filter((l) => l.id !== listId) })),
+        remove: (listId) =>
+          set((s) => ({
+            lists: s.lists.filter((l) => l.id !== listId),
+            tombstones: { ...s.tombstones, [listId]: nextChange(s.lists.find((l) => l.id === listId)?.updatedAt) },
+          })),
         replaceGenerated: (listId, items, fromPlan) =>
           edit(listId, (l) => {
             const ticked = new Set(l.items.filter((i) => i.source === 'GENERATED' && i.checked).map((i) => i.key));
@@ -119,9 +130,14 @@ export const useShoppingLists = create<ShoppingListsState>()(
           editItems(listId, (items) => items.map((i) => (i.id === itemId ? { ...i, checked: !i.checked } : i))),
         removeItem: (listId, itemId) => editItems(listId, (items) => items.filter((i) => i.id !== itemId)),
         clearChecked: (listId) => editItems(listId, (items) => items.filter((i) => !i.checked)),
-        clear: () => set({ lists: [] }),
+        clear: () => set({ lists: [], tombstones: {} }),
       };
     },
-    { name: 'fs.shopping-lists', storage: deviceStorage, version: 1, partialize: (s) => ({ lists: s.lists }) },
+    {
+      name: 'fs.shopping-lists',
+      storage: deviceStorage,
+      version: 1,
+      partialize: (s) => ({ lists: s.lists, tombstones: s.tombstones }),
+    },
   ),
 );

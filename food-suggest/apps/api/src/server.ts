@@ -6,6 +6,7 @@ import { createSupabaseAuthAdmin } from './modules/auth/auth-admin.js';
 import { createSupabaseVerifier } from './modules/auth/verify-token.js';
 import { createMealsRepository } from './modules/meals/meals.repository.js';
 import { createAccountRepository } from './modules/me/account.repository.js';
+import { createSyncRepository } from './modules/sync/sync.repository.js';
 
 const env = loadEnv();
 const logger = createLogger(env);
@@ -17,6 +18,7 @@ const account =
         verify: createSupabaseVerifier(env.SUPABASE_URL),
         accounts: createAccountRepository(db),
         authAdmin: createSupabaseAuthAdmin(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY),
+        sync: createSyncRepository(db),
       }
     : undefined;
 if (db && !account) logger.warn('SUPABASE_URL / SUPABASE_SECRET_KEY not set: account routes are disabled');

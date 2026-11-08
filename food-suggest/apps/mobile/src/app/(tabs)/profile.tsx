@@ -6,6 +6,7 @@ import { Alert, Platform, Pressable, Switch, View } from 'react-native';
 import { AppText, Button, Card, Screen } from '@/components/ui';
 import { deleteAccount, giveHealthConsent, useMe } from '@/features/account/api';
 import { clearLocalData, signOut } from '@/features/account/sign-out';
+import { syncNow, useSyncStatus } from '@/features/sync/engine';
 import { isAuthConfigured } from '@/lib/supabase';
 import { useAuth } from '@/stores/auth';
 import type { StepName } from '@/features/onboarding/flow';
@@ -72,8 +73,11 @@ function AccountCard() {
   if (!session) {
     return (
       <Card style={{ gap: space.sm }}>
-        <AppText variant="headline">Save meals and sync your preferences</AppText>
-        <AppText color="textSecondary">Create a free account with just your email. No password needed.</AppText>
+        <AppText variant="headline">Save meals and use them on any phone</AppText>
+        <AppText color="textSecondary">
+          Create a free account with just your email (no password) to keep your saved meals, meal plan and shopping
+          lists in your account.
+        </AppText>
         <Button label="Sign in or create account" onPress={() => router.push('/sign-in')} />
       </Card>
     );
@@ -100,6 +104,7 @@ function AccountCard() {
         <AppText variant="footnote" color="textSecondary">
           {syncing ? 'Your preferences are synced to your account.' : 'Your preferences stay on this phone only.'}
         </AppText>
+        <SyncStatusLine />
       </View>
       <Button label="Saved meals" variant="secondary" onPress={() => router.push('/favorites')} />
       {syncing ? (
@@ -161,6 +166,30 @@ function AccountCard() {
         </AppText>
       ) : null}
     </Card>
+  );
+}
+
+function SyncStatusLine() {
+  const { space } = useTheme();
+  const { lastSyncedAt, error } = useSyncStatus();
+  const text = error
+    ? error
+    : lastSyncedAt
+      ? `Meal plan and shopping lists synced at ${new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+      : 'Syncing your meal plan and shopping lists…';
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
+      <AppText variant="footnote" color={error ? 'danger' : 'textSecondary'} style={{ flexShrink: 1 }}>
+        {text}
+      </AppText>
+      {error ? (
+        <Pressable accessibilityRole="button" onPress={() => void syncNow()} style={{ minHeight: minTouchTarget, justifyContent: 'center' }}>
+          <AppText variant="footnote" color="primary" style={{ fontWeight: '600' }}>
+            Try again
+          </AppText>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -233,7 +262,8 @@ export default function ProfileScreen() {
         <AppText color="textSecondary">
           Your answers, recently viewed meals, meal plan and shopping lists are stored on this phone. Without an
           account (or without syncing), your answers are sent to Food Suggest only to pick your suggestions, and
-          planned meals only to build shopping lists. Neither is saved on our servers.
+          planned meals only to build shopping lists. Neither is saved on our servers. When you&apos;re signed in, your
+          meal plan and shopping lists are saved to your account so you can use them on other phones.
         </AppText>
         <Button
           label="Clear my data from this phone"

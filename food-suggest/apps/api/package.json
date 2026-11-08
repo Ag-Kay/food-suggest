@@ -19,7 +19,7 @@
     "wafct:extract": "python3 -I scripts/extract_wafct.py",
     "db:dev": "prisma dev --name food-suggest",
     "db:setup": "prisma migrate dev && prisma generate && tsx prisma/seed/index.ts",
-    "test:db": "RUN_DB_TESTS=1 vitest run account.repository.db"
+    "test:db": "RUN_DB_TESTS=1 vitest run .db.test --no-file-parallelism"
   },
   "dependencies": {
     "@food-suggest/shared": "workspace:*",

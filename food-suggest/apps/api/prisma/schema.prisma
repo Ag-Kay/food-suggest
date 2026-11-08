@@ -118,11 +118,6 @@ enum ContentStatus {
   ARCHIVED
 }
 
-enum ShoppingItemSource {
-  GENERATED
-  MANUAL
-}
-
 // ───────────────────────────── Users ─────────────────────────────
 
 /// One row per registered user. `id` is the Supabase Auth user id (UUID),
@@ -141,7 +136,7 @@ model User {
   cuisinePrefs    UserCuisinePref[]
   consents        Consent[]
   favorites       Favorite[]
-  mealPlans       MealPlan[]
+  planEntries     PlanEntry[]
   shoppingLists   ShoppingList[]
 }
 
@@ -262,7 +257,6 @@ model Ingredient {
   nutrients     IngredientNutrients?
   usedIn        VariantIngredient[]
   userPrefs     UserIngredientPref[]
-  shoppingItems ShoppingListItem[]
 }
 
 model IngredientAllergen {
@@ -352,7 +346,6 @@ model MealVariant {
   ingredients VariantIngredient[]
   steps       VariantStep[]
   nutrition   VariantNutrition?
-  planEntries MealPlanEntry[]
 
   @@index([mealId])
 }
@@ -435,67 +428,41 @@ model Favorite {
   @@id([userId, mealId])
 }
 
-model MealPlan {
-  id        String   @id @default(cuid())
+/// One planned meal. Synced from the app (M5b): the id is created on the phone, and
+/// the newest change wins (`changedAt`). Deleted entries stay as tombstones for a while
+/// so other devices learn about the deletion.
+model PlanEntry {
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  entries       MealPlanEntry[]
-  shoppingLists ShoppingList[]
-
-  @@index([userId, startDate])
-}
-
-model MealPlanEntry {
-  id        String      @id @default(cuid())
-  planId    String
-  plan      MealPlan    @relation(fields: [planId], references: [id], onDelete: Cascade)
-  date      DateTime    @db.Date
+  /// Client-generated id, unique per user.
+  id        String
+  date      DateTime @db.Date
   slot      MealSlot
-  variantId String
-  variant   MealVariant @relation(fields: [variantId], references: [id])
-  servings  Decimal     @default(1) @db.Decimal(4, 2)
-  position  Int         @default(0)
+  /// Public meal slug (not a foreign key: a removed meal must not break someone's plan).
+  mealSlug  String
+  mealName  String
+  servings  Int
+  /// When the user last changed it, from the device clock (capped at server time + 5 min).
+  changedAt DateTime
+  deleted   Boolean  @default(false)
 
-  @@index([planId, date])
+  @@id([userId, id])
+  @@index([userId, date])
 }
 
+/// A shopping list, synced as one document: its items are stored as validated JSON
+/// (`ShoppingListItems` in packages/shared). Same id, newest-wins and tombstone rules as PlanEntry.
 model ShoppingList {
-  id        String    @id @default(cuid())
-  userId    String    @db.Uuid
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// The plan this list was generated from, if any.
-  planId    String?
-  plan      MealPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  userId        String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String
+  name          String
+  fromPlanStart DateTime? @db.Date
+  fromPlanEnd   DateTime? @db.Date
+  items         Json
+  createdAt     DateTime
+  changedAt     DateTime
+  deleted       Boolean   @default(false)
 
-  items ShoppingListItem[]
-
-  @@index([userId])
-}
-
-model ShoppingListItem {
-  id           String             @id @default(cuid())
-  listId       String
-  list         ShoppingList       @relation(fields: [listId], references: [id], onDelete: Cascade)
-  /// Null for free-text manual items.
-  ingredientId String?
-  ingredient   Ingredient?        @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
-  name         String
-  /// Null quantity = "to taste" / unquantified.
-  quantity     Decimal?           @db.Decimal(10, 2)
-  unit         String?
-  category     String
-  checked      Boolean            @default(false)
-  source       ShoppingItemSource
-  position     Int                @default(0)
-
-  @@index([listId])
+  @@id([userId, id])
 }

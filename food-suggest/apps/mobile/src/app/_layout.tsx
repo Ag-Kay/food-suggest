@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { createQueryClient } from '@/lib/query-client';
 import { startAuthListener } from '@/stores/auth';
 import { useProfileSync } from '@/features/account/use-profile-sync';
+import { useAccountSync } from '@/features/sync/use-account-sync';
 
 startAuthListener();
 
@@ -49,5 +50,6 @@ export default function RootLayout() {
 
 function ProfileSync() {
   useProfileSync();
+  useAccountSync();
   return null;
 }

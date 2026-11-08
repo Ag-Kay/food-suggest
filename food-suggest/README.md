@@ -71,7 +71,7 @@ development. To point it elsewhere, create `apps/mobile/.env.local` with
 | `GET /v1/cuisines`, `GET /v1/categories`, `GET /v1/ingredients` | Filter and preference options |
 | `POST /v1/recommendations` | Ranked meals with reasons for an on-device profile (not stored) |
 | `POST /v1/shopping-list` | One consolidated, aisle-grouped list for planned meals (`slug` + `servings`; not stored) |
-| `/v1/me/*` | Signed-in account: profile, consent, claim, favourites, deletion (needs Supabase) |
+| `/v1/me/*` | Signed-in account: profile, consent, claim, favourites, plan and list sync, deletion (needs Supabase) |
 
 ## Quality checks
 

@@ -14,6 +14,8 @@ import { recommendationsRouter } from './modules/recommendations/recommendations
 import { meRouter, type MeRouterDeps } from './modules/me/me.router.js';
 import { shoppingRouter } from './modules/shopping/shopping.router.js';
 
+const SYNC_PATH = '/v1/me/sync';
+
 export interface AppDeps {
   logger: Logger;
   /** Requests per minute per IP across the API. */
@@ -71,7 +73,9 @@ export function createApp({
       },
     }),
   );
-  app.use(express.json({ limit: '100kb' }));
+  // 100 KB for every route except account sync, which parses its own (larger) body.
+  const json = express.json({ limit: '100kb' });
+  app.use((req, res, next) => (req.path === SYNC_PATH ? next() : json(req, res, next)));
   app.use(
     rateLimit({
       windowMs: 60_000,

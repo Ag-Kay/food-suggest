@@ -2,6 +2,27 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-08 — Milestone 5b (plan and list sync)
+
+- **Record-level sync, newest change wins.** Every plan entry and shopping list has an id made on
+  the phone and a `changedAt`. One endpoint (`POST /v1/me/sync`) takes the phone's records and returns
+  the account's full state; both sides apply the same rule per record (ties keep the server copy).
+  Chosen over operation logs or CRDTs: one person's plan is small, conflicts are rare, and the rule
+  is easy to reason about and test.
+- **Deletions are tombstones** (`deleted: true`), kept 60 days on the server and on the phone until
+  the account has them. A phone offline for longer could bring back something deleted elsewhere.
+- **Device clocks:** a change time more than 5 minutes in the future is capped to server time + 5 min,
+  so a wrong clock can't win forever. Each local change is strictly newer than the record's previous
+  one (two changes in the same millisecond lost a deletion in testing).
+- **A shopping list is one document** (items stored as validated JSON). Lists are edited by one
+  person at a time; item-level merging can come with shared lists.
+- **Signing in merges, it doesn't replace:** whatever the phone had (including anonymous plans) is
+  uploaded on the first sync. Signing out syncs once more, then clears the phone.
+- **No health-data consent needed for plans and lists:** they're account features like favourites,
+  not the health profile. Listed in Profile → Your data.
+- The old M0 `MealPlan` / `ShoppingListItem` tables were never written to and didn't match the app's
+  model; the migration replaces them.
+
 ## 2026-11-08 — Milestone 5 (meal planning + shopping lists)
 
 - **Plans and lists live on the phone first** (persisted Zustand), for anonymous and signed-in

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 
@@ -7,6 +7,7 @@ import {
   ConsentRequest,
   HEALTH_DATA_CONSENT_VERSION,
   ProfileInput,
+  SyncRequest,
   type ClaimResponse,
   type FavoritesResponse,
   type MeResponse,
@@ -17,6 +18,7 @@ import { authOf, requireAuth } from '../../middleware/require-auth.js';
 import type { AuthAdmin } from '../auth/auth-admin.js';
 import type { TokenVerifier } from '../auth/verify-token.js';
 import type { MealsRepository } from '../meals/meals.repository.js';
+import type { SyncRepository } from '../sync/sync.repository.js';
 import type { AccountRepository } from './account.repository.js';
 
 const MealSlug = z.string().regex(/^[a-z0-9-]{1,80}$/);
@@ -26,6 +28,7 @@ export interface MeRouterDeps {
   accounts: AccountRepository;
   meals: MealsRepository;
   authAdmin: AuthAdmin;
+  sync: SyncRepository;
   perMinute?: number;
 }
 
@@ -33,7 +36,7 @@ export interface MeRouterDeps {
  * The signed-in user's own data. Every handler reads the user id from the
  * verified token (never from the URL or body), so users can only reach their own data.
  */
-export function meRouter({ verify, accounts, meals, authAdmin, perMinute = 60 }: MeRouterDeps): Router {
+export function meRouter({ verify, accounts, meals, authAdmin, sync, perMinute = 60 }: MeRouterDeps): Router {
   const router = Router();
   router.use(
     rateLimit({
@@ -129,6 +132,16 @@ export function meRouter({ verify, accounts, meals, authAdmin, perMinute = 60 }:
     if (!slug.success) throw HttpError.notFound('Meal not found');
     await accounts.removeFavorite(authOf(req).userId, slug.data);
     res.status(204).end();
+  });
+
+  /**
+   * Two-way sync of meal-plan entries and shopping lists: the phone sends its records,
+   * the newest change per record wins, and the account's full state comes back.
+   * Not covered by the health-data consent: plans and lists are account features like favourites.
+   */
+  router.post('/sync', express.json({ limit: '1mb' }), async (req, res) => {
+    const request = SyncRequest.parse(req.body);
+    res.json(await sync.sync(authOf(req).userId, request));
   });
 
   /** Permanently deletes the account and all its data (App Store guideline 5.1.1(v)). */

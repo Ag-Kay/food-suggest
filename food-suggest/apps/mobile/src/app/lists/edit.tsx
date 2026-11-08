@@ -24,7 +24,7 @@ export default function EditShopping() {
     color: colors.text,
     minHeight: minTouchTarget + 4,
     borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.surface,
     paddingHorizontal: space.md,
   };
 
@@ -70,7 +70,7 @@ export default function EditShopping() {
         router.back();
       }}>
       <Stack.Screen options={{ title: 'Edit item' }} />
-      <Card style={{ gap: space.sm }}>
+      <Card tone="muted" style={{ gap: space.sm }}>
         <AppText variant="subhead" color="textSecondary">
           Name
         </AppText>

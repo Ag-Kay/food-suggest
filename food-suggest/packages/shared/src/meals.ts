@@ -105,4 +105,14 @@ export interface MealDetail extends Omit<
   > {
   categories: { slug: string; name: string }[];
   variants: MealVariantDetail[];
+  /** Photo credit; shown with the photo (required by CC BY / CC BY-SA licences). */
+  image: ImageCredit | null;
+}
+
+export interface ImageCredit {
+  alt: string;
+  /** "Photographer / Source". */
+  credit: string;
+  license: string;
+  sourceUrl: string | null;
 }

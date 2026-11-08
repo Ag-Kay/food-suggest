@@ -29,7 +29,7 @@ const app = createApp({
   account,
   mealsRepo: db && createMealsRepository(db),
   // Expo web dev server only; never enabled in production.
-  corsOrigins: env.NODE_ENV === 'development' ? ['http://localhost:8081'] : [],
+  corsOrigins: env.NODE_ENV === 'development' ? ['http://localhost:8081', 'http://localhost:8082'] : [],
 });
 
 const server = app.listen(env.PORT, () => {

@@ -1,29 +1,37 @@
-import { Pressable, TextInput, View } from 'react-native';
+import { Search, X } from 'lucide-react-native';
+import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { minTouchTarget } from '@/theme/tokens';
 
-import { AppText } from './app-text';
+import { Icon } from './icon';
 
-export interface SearchFieldProps {
+export interface SearchFieldProps extends Pick<TextInputProps, 'autoFocus' | 'onSubmitEditing'> {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  /** Extra control on the right (e.g. a filter button). */
+  trailing?: React.ReactNode;
 }
 
-export function SearchField({ value, onChangeText, placeholder = 'Search' }: SearchFieldProps) {
+/** Pill search field with a search icon and clear button. */
+export function SearchField({ value, onChangeText, placeholder = 'Search', trailing, ...rest }: SearchFieldProps) {
   const { colors, radius, space, typography } = useTheme();
   return (
     <View
       style={{
         flexDirection: 'row',
         alignItems: 'center',
+        gap: space.sm,
         backgroundColor: colors.surfaceMuted,
-        borderRadius: radius.md,
-        paddingLeft: space.md,
-        minHeight: minTouchTarget,
+        borderRadius: radius.pill,
+        paddingLeft: space.lg,
+        paddingRight: trailing ? space.xs : 0,
+        minHeight: minTouchTarget + 6,
       }}>
+      <Icon icon={Search} size="md" color="textSecondary" />
       <TextInput
+        {...rest}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -41,11 +49,10 @@ export function SearchField({ value, onChangeText, placeholder = 'Search' }: Sea
           accessibilityLabel="Clear search"
           onPress={() => onChangeText('')}
           style={{ minWidth: minTouchTarget, minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' }}>
-          <AppText variant="headline" color="textSecondary">
-            ×
-          </AppText>
+          <Icon icon={X} size="md" color="textSecondary" />
         </Pressable>
       ) : null}
+      {trailing}
     </View>
   );
 }

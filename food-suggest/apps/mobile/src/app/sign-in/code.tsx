@@ -1,3 +1,4 @@
+import { KeyRound } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { TextInput } from 'react-native';
@@ -29,7 +30,9 @@ export default function SignInCode() {
     if (err) {
       if (__DEV__) console.warn('[sign-in] verifyOtp failed', err.status, err.message);
       setBusy(false);
-      setError('That code is not right or has expired. Check the latest email, or send a new code.');
+      setError(
+        'That code is not right or has expired. Check the latest email, or send a new code.',
+      );
       return;
     }
     try {
@@ -39,7 +42,12 @@ export default function SignInCode() {
     } catch (e) {
       if (__DEV__) console.warn('[sign-in] completeSignIn failed', e);
       // Signed in, but the API couldn't be reached: the sync will retry later.
-      router.replace({ pathname: '/sign-in/done', params: { message: "You're signed in. We'll sync your data when we can reach Food Suggest." } });
+      router.replace({
+        pathname: '/sign-in/done',
+        params: {
+          message: "You're signed in. We'll sync your data when we can reach Food Suggest.",
+        },
+      });
     } finally {
       setBusy(false);
     }
@@ -50,17 +58,24 @@ export default function SignInCode() {
     const { error: err } = await supabase.auth.signInWithOtp({ email });
     setResent(!err);
     if (err && __DEV__) console.warn('[sign-in] resend failed', err.status, err.message);
-    if (err) setError(err.status === 429 ? 'Please wait a minute before asking for another code.' : "We couldn't send a new code.");
+    if (err)
+      setError(
+        err.status === 429
+          ? 'Please wait a minute before asking for another code.'
+          : "We couldn't send a new code.",
+      );
   };
 
   return (
     <StepLayout
+      icon={KeyRound}
       title="Enter your code"
       why={`We sent a 6-digit code to ${email}. It may take a minute to arrive; check your spam folder too.`}
       primaryLabel={busy ? 'Checking…' : 'Continue'}
       primaryDisabled={code.length !== CODE_LENGTH || busy}
-      onPrimary={() => verify()}>
-      <Card style={{ gap: space.sm }}>
+      onPrimary={() => verify()}
+    >
+      <Card tone="muted" style={{ gap: space.sm }}>
         <TextInput
           value={code}
           onChangeText={(t) => {
@@ -88,7 +103,7 @@ export default function SignInCode() {
               textAlign: 'center',
               minHeight: minTouchTarget + 16,
               borderRadius: radius.md,
-              backgroundColor: colors.surfaceMuted,
+              backgroundColor: colors.surface,
             },
           ]}
         />

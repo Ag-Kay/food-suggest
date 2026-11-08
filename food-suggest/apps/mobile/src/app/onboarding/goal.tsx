@@ -24,7 +24,8 @@ export default function GoalStep() {
       onSecondary={() => {
         update({ goal: undefined });
         flow.goNext();
-      }}>
+      }}
+    >
       <View style={{ gap: space.sm }} accessibilityRole="radiogroup">
         {GOAL_OPTIONS.map((g) => (
           <OptionRow

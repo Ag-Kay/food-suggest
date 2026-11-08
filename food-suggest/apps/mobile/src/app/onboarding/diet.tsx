@@ -21,7 +21,8 @@ export default function DietStep() {
       why="We'll only suggest meals that match. If you also avoid particular foods, you can add them shortly."
       onPrimary={flow.goNext}
       secondaryLabel="Skip"
-      onSecondary={flow.goNext}>
+      onSecondary={flow.goNext}
+    >
       <View style={{ gap: space.sm }} accessibilityRole="radiogroup">
         {DIET_OPTIONS.map((d) => (
           <OptionRow

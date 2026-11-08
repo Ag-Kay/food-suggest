@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Animated, View, type ViewStyle } from 'react-native';
 
+import { CloudOff } from 'lucide-react-native';
+
 import { useTheme } from '@/hooks/use-theme';
 
 import { AppText } from './app-text';
 import { Button } from './button';
+import { Icon } from './icon';
 
 /** Pulsing grey block used to sketch content while it loads. */
 export function Skeleton({ style }: { style?: ViewStyle }) {
@@ -22,7 +25,7 @@ export function Skeleton({ style }: { style?: ViewStyle }) {
   }, [opacity]);
   return (
     <Animated.View
-      style={[{ backgroundColor: colors.surfaceMuted, borderRadius: radius.md, opacity }, style]}
+      style={[{ backgroundColor: colors.surfaceMuted, borderRadius: radius.lg, opacity }, style]}
     />
   );
 }
@@ -31,6 +34,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   const { space } = useTheme();
   return (
     <View accessibilityRole="alert" style={{ alignItems: 'center', gap: space.sm, paddingVertical: space.xxl }}>
+      <Icon icon={CloudOff} size="xl" color="textSecondary" />
       <AppText variant="title3" style={{ textAlign: 'center' }}>
         Something went wrong
       </AppText>

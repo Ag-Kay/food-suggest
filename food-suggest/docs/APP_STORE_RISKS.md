@@ -16,3 +16,9 @@ Living list. Status: ⚠️ open, ✅ addressed, 📝 note.
 | Apple 1.4.1 | Seed recipes and nutrition not yet reviewed by a professional | Keep "estimated" labels; get recipes reviewed before launch | ⚠️ |
 | Privacy | Health-related data stored for accounts | Explicit, versioned consent; withdrawal deletes it; privacy policy still to write | ⚠️ policy |
 | Ghana Act 843 | Data controller registration with the Data Protection Commission | Confirm with a local lawyer before launch | ⚠️ |
+
+## Image licences (added 2026-11-08)
+
+Meal photos come from Wikimedia Commons (CC BY 2.0 / CC BY-SA 4.0: attribution required),
+Unsplash and Pexels (free licences). Credits appear on each meal page and on Profile → Photo
+credits. Before launch: host copies ourselves and re-check each photo page for licence changes.

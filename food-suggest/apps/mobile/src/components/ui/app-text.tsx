@@ -9,6 +9,7 @@ export interface AppTextProps extends TextProps {
 }
 
 const HEADING_VARIANTS: ReadonlySet<TypographyVariant> = new Set([
+  'display',
   'largeTitle',
   'title1',
   'title2',

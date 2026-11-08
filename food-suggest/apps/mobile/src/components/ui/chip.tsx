@@ -1,43 +1,46 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { minTouchTarget } from '@/theme/tokens';
 
 import { AppText } from './app-text';
+import { Icon, type LucideIcon } from './icon';
+import { PressableScale } from './pressable-scale';
 
 export interface ChipProps {
   label: string;
   selected?: boolean;
   onPress?: () => void;
+  icon?: LucideIcon;
 }
 
-/** Selectable filter chip. Exposed to screen readers as a toggle. */
-export function Chip({ label, selected = false, onPress }: ChipProps) {
+/** Selectable pill. Exposed to screen readers as a toggle. */
+export function Chip({ label, selected = false, onPress, icon }: ChipProps) {
   const { colors, radius, space } = useTheme();
+  const fg = selected ? colors.onPrimary : colors.text;
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="togglebutton"
       accessibilityState={{ checked: selected }}
       accessibilityLabel={label}
       onPress={onPress}
       hitSlop={{ top: 4, bottom: 4 }}
-      style={({ pressed }) => [
+      pressedScale={0.95}
+      style={[
         styles.base,
-        {
-          borderRadius: radius.pill,
-          paddingHorizontal: space.md,
-          backgroundColor: selected ? colors.primary : colors.surface,
-          borderColor: selected ? colors.primary : colors.border,
-          opacity: pressed ? 0.8 : 1,
-        },
+        { borderRadius: radius.pill, paddingHorizontal: space.lg, backgroundColor: selected ? colors.primary : colors.surfaceMuted },
       ]}>
-      <AppText variant="subhead" style={{ color: selected ? colors.onPrimary : colors.text, fontWeight: '600' }}>
-        {label}
-      </AppText>
-    </Pressable>
+      <View style={[styles.row, { gap: space.xs }]}>
+        {icon ? <Icon icon={icon} size="sm" tint={fg} /> : null}
+        <AppText variant="subhead" style={{ color: fg, fontWeight: '600' }}>
+          {label}
+        </AppText>
+      </View>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  base: { minHeight: minTouchTarget - 8, justifyContent: 'center', borderWidth: 1 },
+  base: { minHeight: minTouchTarget - 6, justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center' },
 });

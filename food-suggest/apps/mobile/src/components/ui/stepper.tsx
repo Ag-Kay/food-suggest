@@ -1,9 +1,11 @@
+import { Minus, Plus } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { minTouchTarget } from '@/theme/tokens';
 
 import { AppText } from './app-text';
+import { Icon, type LucideIcon } from './icon';
 
 export interface StepperProps {
   value: number;
@@ -16,17 +18,16 @@ export interface StepperProps {
   format?: (value: number) => string;
 }
 
-/** − value + control, exposed to screen readers as an adjustable element. */
+/** Minus / value / plus control, exposed to screen readers as an adjustable element. */
 export function Stepper({ value, min, max, onChange, label, format = String }: StepperProps) {
   const { colors, radius, space } = useTheme();
   const set = (next: number) => onChange(Math.min(max, Math.max(min, next)));
 
-  const button = (text: string, delta: number, disabled: boolean) => (
+  const button = (glyph: LucideIcon, delta: number, disabled: boolean) => (
     <Pressable
       onPress={() => set(value + delta)}
       disabled={disabled}
-      importantForAccessibility="no"
-      accessibilityElementsHidden
+      aria-hidden
       hitSlop={6}
       style={({ pressed }) => ({
         width: minTouchTarget - 8,
@@ -34,12 +35,10 @@ export function Stepper({ value, min, max, onChange, label, format = String }: S
         borderRadius: radius.pill,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.primaryMuted,
-        opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
+        backgroundColor: colors.surfaceMuted,
+        opacity: disabled ? 0.35 : pressed ? 0.7 : 1,
       })}>
-      <AppText variant="headline" color="primary">
-        {text}
-      </AppText>
+      <Icon icon={glyph} size="md" color="text" />
     </Pressable>
   );
 
@@ -52,11 +51,11 @@ export function Stepper({ value, min, max, onChange, label, format = String }: S
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => set(value + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
       style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-      {button('−', -1, value <= min)}
-      <AppText variant="subhead" style={{ minWidth: 84, textAlign: 'center' }}>
+      {button(Minus, -1, value <= min)}
+      <AppText variant="headline" style={{ minWidth: 84, textAlign: 'center' }}>
         {format(value)}
       </AppText>
-      {button('+', 1, value >= max)}
+      {button(Plus, 1, value >= max)}
     </View>
   );
 }

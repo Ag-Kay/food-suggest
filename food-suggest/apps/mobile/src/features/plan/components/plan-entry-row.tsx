@@ -1,64 +1,40 @@
 import { useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
+import { View } from 'react-native';
+import Animated, { FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 
-import { MAX_PLAN_SERVINGS } from '@food-suggest/shared';
-
-import { AppText, Stepper } from '@/components/ui';
+import { AppText, Icon, PressableScale } from '@/components/ui';
+import { MealImage } from '@/features/meals/components/meal-image';
 import { useTheme } from '@/hooks/use-theme';
-import { useMealPlan, type PlanEntry } from '@/stores/meal-plan';
-import { minTouchTarget } from '@/theme/tokens';
+import type { PlanEntry } from '@/stores/meal-plan';
 
-const servingsText = (n: number) => `${n} serving${n === 1 ? '' : 's'}`;
+export const servingsText = (n: number) => `${n} serving${n === 1 ? '' : 's'}`;
 
-function TextAction({ label, onPress, hint, danger }: { label: string; onPress: () => void; hint: string; danger?: boolean }) {
-  const { colors, space } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityHint={hint}
-      onPress={onPress}
-      hitSlop={4}
-      style={({ pressed }) => ({ minHeight: minTouchTarget, justifyContent: 'center', paddingHorizontal: space.xs, opacity: pressed ? 0.6 : 1 })}>
-      <AppText variant="subhead" style={{ color: danger ? colors.danger : colors.primary, fontWeight: '600' }}>
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
-/** One planned meal: open it, change servings, replace or remove. */
-export function PlanEntryRow({ entry }: { entry: PlanEntry }) {
+/** One planned meal: photo, name and servings. Tap for servings, replace and remove. */
+export function PlanEntryRow({ entry, imageUrl }: { entry: PlanEntry; imageUrl?: string | null }) {
   const router = useRouter();
-  const { colors, space } = useTheme();
-  const { setServings, remove } = useMealPlan.getState();
+  const { radius, space } = useTheme();
 
   return (
-    <View style={{ gap: space.xs, paddingVertical: space.sm, borderTopWidth: 1, borderTopColor: colors.border }}>
-      <Pressable
-        accessibilityRole="link"
-        accessibilityHint="Opens the recipe"
-        onPress={() => router.push({ pathname: '/meal/[slug]', params: { slug: entry.slug } })}
-        style={({ pressed }) => ({ minHeight: minTouchTarget - 8, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })}>
-        <AppText variant="headline">{entry.name}</AppText>
-      </Pressable>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm }}>
-        <Stepper
-          value={entry.servings}
-          min={1}
-          max={MAX_PLAN_SERVINGS}
-          onChange={(n) => setServings(entry.id, n)}
-          label={`Servings of ${entry.name}`}
-          format={servingsText}
-        />
-        <View style={{ flexDirection: 'row' }}>
-          <TextAction
-            label="Replace"
-            hint={`Choose another meal instead of ${entry.name}`}
-            onPress={() => router.push({ pathname: '/plan/pick-meal', params: { date: entry.date, slot: entry.slot, replace: entry.id } })}
-          />
-          <TextAction label="Remove" danger hint={`Removes ${entry.name} from this day`} onPress={() => remove(entry.id)} />
+    <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} layout={LinearTransition.duration(220)}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={`${entry.name}, ${servingsText(entry.servings)}`}
+        accessibilityHint="Change servings, replace or remove"
+        onPress={() => router.push({ pathname: '/plan/entry', params: { id: entry.id } })}
+        pressedScale={0.98}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.xs }}>
+        <MealImage slug={entry.slug} uri={imageUrl} style={{ width: 60, height: 60, borderRadius: radius.md }} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText variant="headline" numberOfLines={2}>
+            {entry.name}
+          </AppText>
+          <AppText variant="footnote" color="textSecondary">
+            {servingsText(entry.servings)}
+          </AppText>
         </View>
-      </View>
-    </View>
+        <Icon icon={ChevronRight} color="textSecondary" />
+      </PressableScale>
+    </Animated.View>
   );
 }

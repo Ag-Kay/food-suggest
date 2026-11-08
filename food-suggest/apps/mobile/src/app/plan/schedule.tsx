@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { CalendarCheck } from 'lucide-react-native';
 import { ScrollView, View } from 'react-native';
 
 import { MAX_PLAN_SERVINGS, MealSlot } from '@food-suggest/shared';
@@ -8,6 +9,7 @@ import { AppText, Card, Chip, Stepper } from '@/components/ui';
 import { addDays, dayLabel, todayKey } from '@/features/plan/dates';
 import { StepLayout } from '@/features/onboarding/step-layout';
 import { useTheme } from '@/hooks/use-theme';
+import { SLOT_ICONS } from '@/lib/icons';
 import { SLOT_LABELS } from '@/lib/labels';
 import { useMealPlan } from '@/stores/meal-plan';
 
@@ -43,6 +45,7 @@ export default function ScheduleMeal() {
   if (added) {
     return (
       <StepLayout
+        icon={CalendarCheck}
         title="Added to your plan"
         why={`${params.name} · ${dayLabel(date, today)}, ${SLOT_LABELS[slot].toLowerCase()} · ${servingsText(servings)}`}
         primaryLabel="Done"
@@ -61,7 +64,7 @@ export default function ScheduleMeal() {
   return (
     <StepLayout
       title={params.name}
-      why="Choose when you'll have it. Servings is how many portions you'll cook; the shopping list uses it."
+      why="Pick a day and meal. Servings set the shopping amounts."
       primaryLabel="Add to plan"
       onPrimary={() => {
         add({ date, slot, slug: params.slug, name: params.name, servings });
@@ -82,7 +85,7 @@ export default function ScheduleMeal() {
         <AppText variant="headline">Meal</AppText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           {SLOTS.map((s) => (
-            <Chip key={s} label={SLOT_LABELS[s]} selected={s === slot} onPress={() => setSlot(s)} />
+            <Chip key={s} label={SLOT_LABELS[s]} icon={SLOT_ICONS[s]} selected={s === slot} onPress={() => setSlot(s)} />
           ))}
         </View>
         {mealSlots.length && !mealSlots.includes(slot) ? (
@@ -91,7 +94,7 @@ export default function ScheduleMeal() {
           </AppText>
         ) : null}
       </View>
-      <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md }}>
+      <Card tone="muted" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md }}>
         <AppText variant="headline">Servings</AppText>
         <Stepper value={servings} min={1} max={MAX_PLAN_SERVINGS} onChange={setServings} label="Servings" format={servingsText} />
       </Card>

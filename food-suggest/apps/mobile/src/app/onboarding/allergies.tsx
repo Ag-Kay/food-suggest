@@ -20,7 +20,9 @@ export default function AllergiesStep() {
   const flow = useStepFlow('allergies');
 
   const toggle = (a: Allergen) =>
-    update({ allergens: allergens.includes(a) ? allergens.filter((x) => x !== a) : [...allergens, a] });
+    update({
+      allergens: allergens.includes(a) ? allergens.filter((x) => x !== a) : [...allergens, a],
+    });
 
   return (
     <StepLayout
@@ -29,11 +31,13 @@ export default function AllergiesStep() {
       title="Any food allergies or intolerances?"
       why="Meals containing these are removed from your suggestions. This is optional and stays on your phone."
       primaryLabel={allergens.length ? 'Continue' : 'I have none'}
-      onPrimary={flow.goNext}>
+      onPrimary={flow.goNext}
+    >
       <Card>
         <AppText variant="footnote" color="textSecondary">
-          Recipes vary between cooks and sellers, so always check ingredients if you have an allergy. Meals
-          with ingredients we can&apos;t check (such as stock cubes) are left out for anyone with an allergy.
+          Recipes vary between cooks and sellers, so always check ingredients if you have an
+          allergy. Meals with ingredients we can&apos;t check (such as stock cubes) are left out for
+          anyone with an allergy.
         </AppText>
       </Card>
       <View style={{ gap: space.sm }}>

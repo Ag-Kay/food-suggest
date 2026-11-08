@@ -16,6 +16,7 @@ import { createDb } from '../../src/lib/db.js';
 import { calculateVariantNutrition, type NutrientsPer100g } from '../../src/modules/nutrition/calculator.js';
 import { CATEGORIES, CUISINES, SOURCES } from './catalogue.js';
 import { INGREDIENTS, type IngredientSeed } from './ingredients.js';
+import { MEAL_IMAGES } from './images.js';
 import { MEALS } from './meals.js';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), 'data');
@@ -162,7 +163,25 @@ async function main() {
 
   const problems: string[] = [];
   for (const meal of MEALS) {
+    const photo = MEAL_IMAGES[meal.slug];
+    let imageId: string | null = null;
+    if (photo) {
+      const imageData = {
+        storageKey: photo.url,
+        width: photo.width,
+        height: photo.height,
+        altText: photo.alt,
+        credit: photo.credit,
+        license: photo.license,
+        sourceUrl: photo.sourceUrl,
+      };
+      const image = await db.image.upsert({ where: { storageKey: photo.url }, create: imageData, update: imageData });
+      imageId = image.id;
+    } else {
+      problems.push(`${meal.slug}: no photo`);
+    }
     const mealData = {
+      imageId,
       slug: meal.slug,
       name: meal.name,
       localNames: meal.localNames ?? [],

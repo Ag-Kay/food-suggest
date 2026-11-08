@@ -30,10 +30,15 @@ export default function FoodsStep() {
     const q = search.trim().toLowerCase();
     const items = ingredients.data?.items ?? [];
     const matches = q
-      ? items.filter((i) => i.name.toLowerCase().includes(q) || i.aliases.some((a) => a.toLowerCase().includes(q)))
+      ? items.filter(
+          (i) =>
+            i.name.toLowerCase().includes(q) || i.aliases.some((a) => a.toLowerCase().includes(q)),
+        )
       : items;
     // Selected items first so they stay visible.
-    return [...matches].sort((a, b) => Number(avoid.includes(b.slug)) - Number(avoid.includes(a.slug)));
+    return [...matches].sort(
+      (a, b) => Number(avoid.includes(b.slug)) - Number(avoid.includes(a.slug)),
+    );
   }, [ingredients.data, search, avoid]);
 
   return (
@@ -44,7 +49,8 @@ export default function FoodsStep() {
       why="Pick cuisines you enjoy, and any foods you never want in your suggestions."
       onPrimary={flow.goNext}
       secondaryLabel="Skip"
-      onSecondary={flow.goNext}>
+      onSecondary={flow.goNext}
+    >
       <View style={{ gap: space.sm }}>
         <AppText variant="headline">Cuisines you enjoy</AppText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
@@ -62,7 +68,11 @@ export default function FoodsStep() {
 
       <View style={{ gap: space.sm }}>
         <AppText variant="headline">Foods to avoid</AppText>
-        <SearchField value={search} onChangeText={setSearch} placeholder="Search foods, e.g. goat" />
+        <SearchField
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search foods, e.g. goat"
+        />
         {ingredients.isError ? (
           <AppText color="danger">{ingredients.error.message}</AppText>
         ) : (

@@ -1,3 +1,6 @@
+import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces/600SemiBold';
+import { Fraunces_700Bold } from '@expo-google-fonts/fraunces/700Bold';
+import { useFonts } from 'expo-font';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -14,7 +17,12 @@ startAuthListener();
 export default function RootLayout() {
   const { scheme, colors } = useTheme();
   const [queryClient] = useState(createQueryClient);
+  // Fraunces is bundled with the app, so this resolves almost instantly; a load error
+  // falls back to the system font rather than blocking the app.
+  const [fontsLoaded, fontError] = useFonts({ Fraunces_600SemiBold, Fraunces_700Bold });
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -24,7 +32,7 @@ export default function RootLayout() {
           ...base,
           colors: {
             ...base.colors,
-            primary: colors.primary,
+            primary: colors.link,
             background: colors.background,
             card: colors.surface,
             text: colors.text,
@@ -32,16 +40,30 @@ export default function RootLayout() {
           },
         }}>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-        <Stack screenOptions={{ headerTintColor: colors.primary, headerBackButtonDisplayMode: 'minimal' }}>
+        <Stack screenOptions={{ headerTintColor: colors.link, headerBackButtonDisplayMode: 'minimal' }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="meal/[slug]" options={{ title: '' }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
           <Stack.Screen name="sign-in" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen name="favorites" options={{ title: 'Saved meals' }} />
+          <Stack.Screen name="privacy" options={{ title: 'Your data' }} />
+          <Stack.Screen name="credits" options={{ title: 'Photo credits' }} />
+          <Stack.Screen
+            name="discover-filters"
+            options={{ title: 'Filters', presentation: 'formSheet', sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true }}
+          />
           <Stack.Screen name="plan/schedule" options={{ title: 'Add to plan', presentation: 'modal' }} />
           <Stack.Screen name="plan/pick-meal" options={{ title: 'Choose a meal', presentation: 'modal' }} />
+          <Stack.Screen
+            name="plan/entry"
+            options={{ title: '', presentation: 'formSheet', sheetAllowedDetents: [0.55, 0.85], sheetGrabberVisible: true }}
+          />
           <Stack.Screen name="lists/[id]" options={{ title: '' }} />
-          <Stack.Screen name="lists/edit" options={{ title: 'Edit', presentation: 'modal' }} />
+          <Stack.Screen name="lists/edit" options={{ title: '', presentation: 'formSheet', sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true }} />
+          <Stack.Screen
+            name="lists/actions"
+            options={{ title: '', presentation: 'formSheet', sheetAllowedDetents: [0.45, 0.7], sheetGrabberVisible: true }}
+          />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

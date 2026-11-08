@@ -29,7 +29,8 @@ export default function AgeStep() {
           // Personalisation is 16+ only: discard any answers already saved on this device.
           resetProfile();
           flow.exit();
-        }}>
+        }}
+      >
         <View />
       </StepLayout>
     );
@@ -47,7 +48,8 @@ export default function AgeStep() {
         if (!result.year) return;
         update({ birthYear: result.year });
         flow.goNext();
-      }}>
+      }}
+    >
       <Card style={{ gap: space.sm }}>
         <AppText variant="subhead" color="textSecondary" nativeID="birth-year-label">
           Birth year

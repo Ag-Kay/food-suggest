@@ -28,10 +28,10 @@ const item: Recommendation = {
 };
 
 describe('RecommendationCard', () => {
-  it('shows the reasons and cautions, and exposes them to screen readers', async () => {
-    await render(<RecommendationCard item={item} />);
-    expect(screen.getByText('Fits your vegetarian diet.')).toBeTruthy();
+  it('shows the top reason and every caution, and reads all reasons to screen readers', async () => {
+    await render(<RecommendationCard item={item} width={300} />);
+    expect(screen.getByText('A good source of fibre (6 g per serving).')).toBeTruthy();
     expect(screen.getByText('Leave out the shito: it contains fish.')).toBeTruthy();
-    expect(screen.getByLabelText(/Waakye\. Why: A good source of fibre.*Note: Leave out the shito/)).toBeTruthy();
+    expect(screen.getByLabelText(/Waakye\. 1 h 30 min\. Why: A good source of fibre.*Note: Leave out the shito/)).toBeTruthy();
   });
 });

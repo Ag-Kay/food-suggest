@@ -21,8 +21,13 @@ export default function CookingStep() {
       title="How do you like to cook?"
       why="So we can suggest meals that fit your time and experience."
       primaryLabel={flow.editing ? 'Save' : 'Finish'}
-      onPrimary={flow.goNext}>
-      <View style={{ gap: space.sm }} accessibilityRole="radiogroup" accessibilityLabel="Cooking time">
+      onPrimary={flow.goNext}
+    >
+      <View
+        style={{ gap: space.sm }}
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Cooking time"
+      >
         <AppText variant="headline">Time for cooking</AppText>
         {TIME_OPTIONS.map((t) => (
           <OptionRow
@@ -33,7 +38,11 @@ export default function CookingStep() {
           />
         ))}
       </View>
-      <View style={{ gap: space.sm }} accessibilityRole="radiogroup" accessibilityLabel="Cooking experience">
+      <View
+        style={{ gap: space.sm }}
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Cooking experience"
+      >
         <AppText variant="headline">Cooking experience</AppText>
         {SKILL_OPTIONS.map((s) => (
           <OptionRow

@@ -1,3 +1,4 @@
+import { Mail } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { TextInput, View } from 'react-native';
@@ -24,7 +25,8 @@ export default function SignInEmail() {
         title="Sign-in isn't set up yet"
         why="This version of the app isn't connected to an account service. You can keep using Food Suggest without an account."
         primaryLabel="Back"
-        onPrimary={() => router.back()}>
+        onPrimary={() => router.back()}
+      >
         <View />
       </StepLayout>
     );
@@ -39,7 +41,11 @@ export default function SignInEmail() {
     if (err) {
       // Development only: Supabase's own message (e.g. SMTP failures). Never shown to users.
       if (__DEV__) console.warn('[sign-in] signInWithOtp failed', err.status, err.message);
-      setError(err.status === 429 ? 'Please wait a minute before asking for another code.' : "We couldn't send the code. Please try again.");
+      setError(
+        err.status === 429
+          ? 'Please wait a minute before asking for another code.'
+          : "We couldn't send the code. Please try again.",
+      );
       return;
     }
     router.push({ pathname: '/sign-in/code', params: { email: email.trim().toLowerCase() } });
@@ -47,12 +53,14 @@ export default function SignInEmail() {
 
   return (
     <StepLayout
+      icon={Mail}
       title="Sign in or create an account"
-      why="We'll email you a 6-digit code. No password needed."
+      why="We'll email you a 6-digit code. No password."
       primaryLabel={busy ? 'Sending…' : 'Email me a code'}
       primaryDisabled={!valid || busy}
-      onPrimary={send}>
-      <Card style={{ gap: space.sm }}>
+      onPrimary={send}
+    >
+      <Card tone="muted" style={{ gap: space.sm }}>
         <AppText variant="subhead" color="textSecondary">
           Email address
         </AppText>
@@ -76,7 +84,7 @@ export default function SignInEmail() {
               color: colors.text,
               minHeight: minTouchTarget + 4,
               borderRadius: radius.md,
-              backgroundColor: colors.surfaceMuted,
+              backgroundColor: colors.surface,
               paddingHorizontal: space.md,
             },
           ]}
@@ -88,8 +96,8 @@ export default function SignInEmail() {
         ) : null}
       </Card>
       <AppText variant="footnote" color="textSecondary">
-        With an account you can save meals and keep your preferences on all your devices. You can delete your
-        account at any time in Profile.
+        With an account you can save meals and keep your preferences on all your devices. You can
+        delete your account at any time in Profile.
       </AppText>
     </StepLayout>
   );

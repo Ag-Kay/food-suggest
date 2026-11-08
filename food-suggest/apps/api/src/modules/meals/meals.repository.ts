@@ -107,8 +107,18 @@ function toVariantDetail(v: VariantRow): MealVariantDetail {
   };
 }
 
+type ImageRow = { storageKey: string; altText: string; credit: string; license: string; sourceUrl: string | null } | null;
+
 function toCard(
-  m: { slug: string; name: string; localNames: string[]; description: string; slots: MealCard['slots']; cuisine: { slug: string; name: string } },
+  m: {
+    slug: string;
+    name: string;
+    localNames: string[];
+    description: string;
+    slots: MealCard['slots'];
+    cuisine: { slug: string; name: string };
+    image: ImageRow;
+  },
   v: VariantRow,
 ): MealCard {
   const derivable = toDerivable(v);
@@ -120,7 +130,7 @@ function toCard(
     description: m.description,
     cuisine: { slug: m.cuisine.slug, name: m.cuisine.name },
     slots: m.slots,
-    imageUrl: null,
+    imageUrl: m.image?.storageKey ?? null,
     totalMinutes: v.prepMinutes + v.cookMinutes,
     difficulty: v.difficulty,
     diet: deriveDiet(derivable),
@@ -179,7 +189,7 @@ export function createMealsRepository(db: Db): MealsRepository {
     async listCandidates() {
       const meals = await db.meal.findMany({
         where: { status: 'PUBLISHED' },
-        include: { cuisine: true, variants: { include: variantInclude } },
+        include: { cuisine: true, image: true, variants: { include: variantInclude } },
       });
       return meals.flatMap((m) => {
         const v = pickDefault(m.variants);
@@ -205,7 +215,7 @@ export function createMealsRepository(db: Db): MealsRepository {
       if (!slugs.length) return [];
       const meals = await db.meal.findMany({
         where: { slug: { in: slugs }, status: 'PUBLISHED' },
-        include: { cuisine: true, variants: { include: variantInclude } },
+        include: { cuisine: true, image: true, variants: { include: variantInclude } },
       });
       const bySlug = new Map(
         meals.flatMap((m) => {
@@ -281,7 +291,10 @@ export function createMealsRepository(db: Db): MealsRepository {
         description: m.description,
         cuisine: { slug: m.cuisine.slug, name: m.cuisine.name },
         slots: m.slots,
-        imageUrl: null,
+        imageUrl: m.image?.storageKey ?? null,
+        image: m.image
+          ? { alt: m.image.altText, credit: m.image.credit, license: m.image.license, sourceUrl: m.image.sourceUrl }
+          : null,
         categories: m.categories.map((c) => ({ slug: c.category.slug, name: c.category.name })),
         variants: m.variants.map(toVariantDetail),
       };

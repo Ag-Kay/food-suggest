@@ -12,6 +12,7 @@
 | M4b | Sign in with Apple + Google (development build, Apple Developer account, Google Cloud) | Pending |
 | M5 | Meal planning + shopping lists (on the phone) | ✅ Done (2026-11-08) |
 | M5b | Sync plans and shopping lists to the account | ✅ Built (2026-11-08) — needs a two-phone test |
+| UI | Redesign: saffron + charcoal, food photos, Lucide icons, Fraunces | ✅ Done (2026-11-08) — browser-checked, phone check pending |
 | M6 | Hardening: accessibility, offline, privacy policy, TestFlight / Play testing | Pending |
 | v1.1 | AI explanations and alternatives (Groq) | Pending |
 
@@ -111,7 +112,20 @@
   (`pnpm --filter @food-suggest/api test:db`, now runs every `*.db.test.ts` one file at a time).
 - **Not yet tested with a real account on two devices.**
 
+## UI redesign — what changed
+
+- Design tokens (`theme/tokens.ts`), shared components (Icon, IconButton, PressableScale, Button,
+  Chip, Card, Badge, SearchField, SectionHeader, ListGroup/ListRow, Segmented, Stepper, EmptyState).
+- Every screen restyled: Home, Discover (+ filter sheet), meal page, Saved meals, Plan (+ entry
+  sheet, picker, Add to plan), Lists (+ list, options and edit sheets), Profile (+ Privacy, Photo
+  credits), onboarding and sign-in.
+- Photos for all 15 meals with credits (`prisma/seed/images.ts`; rerun `pnpm db:seed`).
+- Checked in the browser at phone size in light and dark mode. Not yet checked on a device.
+
 ## Known gaps / to do
+
+- **Before launch:** copy meal photos to our own storage/CDN; keep the credits.
+- Count-only shopping amounts show a bare number ("1" lemon); consider "1 ×" or units per item.
 
 - Sync is whole-state per request (fine for one person's data); shopping lists merge as whole
   documents, so ticking items on two phones at the same moment keeps only the newer list.

@@ -26,12 +26,12 @@ describe('NutritionPanel', () => {
 
   it('hides calories by default and shows them after opting in', async () => {
     await render(<NutritionPanel nutrition={nutrition} servings={4} />);
-    expect(screen.queryByText('460 kcal')).toBeNull();
-    expect(screen.getByText('20.3 g')).toBeTruthy();
-    expect(screen.getByText(/Estimated from the ingredients/)).toBeTruthy();
+    expect(screen.queryByLabelText('Energy: 460 kcal')).toBeNull();
+    expect(screen.getByLabelText('Protein: 20.3 g')).toBeTruthy();
+    expect(screen.getByText(/Estimated per serving \(1 of 4\)/)).toBeTruthy();
 
     await fireEvent(screen.getByLabelText('Show calories'), 'valueChange', true);
-    expect(screen.getByText('460 kcal')).toBeTruthy();
+    expect(screen.getByLabelText('Energy: 460 kcal')).toBeTruthy();
   });
 
   it('explains when nutrition is missing', async () => {
@@ -43,8 +43,8 @@ describe('NutritionPanel', () => {
 describe('AllergenNotice', () => {
   it('lists allergens, optional extras and warns when info is incomplete', async () => {
     await render(<AllergenNotice allergens={['EGG']} optionalAllergens={['FISH']} complete={false} />);
-    expect(screen.getByText('Contains: Egg.')).toBeTruthy();
-    expect(screen.getByText('Optional extras contain: Fish.')).toBeTruthy();
+    expect(screen.getByText('Contains egg')).toBeTruthy();
+    expect(screen.getByText('Optional extras: fish')).toBeTruthy();
     expect(screen.getByText(/vary by brand/)).toBeTruthy();
   });
 

@@ -2,6 +2,34 @@
 
 Newest first. Each entry: what we decided, why, and what would make us revisit it.
 
+## 2026-11-08 — UI/UX redesign (before M6)
+
+- **Direction** (owner's reference image): charcoal surfaces, one **saffron** accent (#F5B21A),
+  food photography first, generous spacing, pill buttons and chips, borderless rounded cards.
+  Light theme is warm off-white with the same accent; the app follows the system setting.
+- **Contrast rule:** saffron is a fill (dark text on it). Saffron *text* uses the `link` token,
+  which is a darker shade (#8A5B00) in light mode. Tab labels and back buttons use `link`.
+- **Type:** Fraunces (SemiBold/Bold, SIL OFL) for display titles and meal names; the system font
+  for everything else (HIG). Only the two weights are bundled.
+- **Icons:** Lucide (`lucide-react-native` + `react-native-svg`), one 2 px stroke style through a
+  single `Icon` component; no emoji or text symbols as icons. Pinned to a release that was at least
+  two weeks old. Jest maps Lucide to its CommonJS build.
+- **Photos:** one per meal from Wikimedia Commons (11, CC BY / CC BY-SA, attribution required),
+  Unsplash (2) and Pexels (2), chosen to show the actual dish; stored in the existing `Image` table
+  (no schema change) and returned as `imageUrl` plus `image` credit on meal details. Credits are shown
+  on each meal ("About this recipe") and on Profile → Photo credits. The spaghetti photo shows no
+  sardines (no free photo exists). Loaded from the sources' CDNs for now with `expo-image`
+  (disk cache, fade-in, tinted fallback); **copy to our own storage before launch (M6)**.
+- **Motion:** Reanimated press-scale on cards and buttons (respects Reduce Motion), layout
+  animations when plan entries and list items change. Jest uses a small manual Reanimated mock.
+- **Structure changes (behaviour kept):** Discover filters moved to a sheet (meal-type chips stay
+  inline); planned meals open a sheet for servings / replace / remove; list options moved to a "⋯"
+  sheet; list items tick on tap and edit on long press (also an accessibility action); Profile is a
+  grouped settings list with Privacy and Credits pages; the meal page has a full-bleed photo,
+  stat tiles, Ingredients/Method tabs and a collapsible "About this recipe".
+- Hearts on cards are siblings of the card button (not nested) so screen readers reach both.
+- Cautions on recommendation cards stay visible in full (safety information).
+
 ## 2026-11-08 — Milestone 5b (plan and list sync)
 
 - **Record-level sync, newest change wins.** Every plan entry and shopping list has an id made on

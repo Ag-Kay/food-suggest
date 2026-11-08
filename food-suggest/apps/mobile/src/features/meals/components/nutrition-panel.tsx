@@ -2,75 +2,68 @@ import { Switch, View } from 'react-native';
 
 import type { NutritionSummary } from '@food-suggest/shared';
 
-import { AppText, Card } from '@/components/ui';
+import { AppText } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { usePreferences } from '@/stores/preferences';
 
-function Stat({ label, value }: { label: string; value: string }) {
-  const { space } = useTheme();
+function Tile({ label, value, unit }: { label: string; value: string; unit: string }) {
+  const { colors, radius, space } = useTheme();
   return (
-    <View style={{ flexGrow: 1, flexBasis: '30%', gap: space.xxs }}>
-      <AppText variant="title3">{value}</AppText>
+    <View
+      accessible
+      accessibilityLabel={`${label}: ${value} ${unit}`}
+      style={{ flexGrow: 1, flexBasis: '30%', minWidth: 88, backgroundColor: colors.surfaceMuted, borderRadius: radius.md, paddingVertical: space.md, paddingHorizontal: space.sm, gap: 2 }}>
       <AppText variant="caption" color="textSecondary">
         {label}
+      </AppText>
+      <AppText variant="title2">
+        {value}
+        <AppText variant="caption" color="textSecondary">
+          {` ${unit}`}
+        </AppText>
       </AppText>
     </View>
   );
 }
 
-const fmt = (v: number | null, unit: string) => (v == null ? 'Unknown' : `${Math.round(v * 10) / 10} ${unit}`);
+const num = (v: number | null) => (v == null ? '—' : String(Math.round(v * 10) / 10));
 
-/** Per-serving nutrition. Calories are opt-in; every figure is labelled an estimate. */
+/** Per-serving nutrition as tiles. Calories are opt-in; every figure is an estimate. */
 export function NutritionPanel({ nutrition, servings }: { nutrition: NutritionSummary | null; servings: number }) {
   const { space, colors } = useTheme();
   const showCalories = usePreferences((s) => s.showCalories);
   const setShowCalories = usePreferences((s) => s.setShowCalories);
 
   if (!nutrition) {
-    return (
-      <Card>
-        <AppText color="textSecondary">Nutrition information isn&apos;t available for this recipe yet.</AppText>
-      </Card>
-    );
+    return <AppText color="textSecondary">Nutrition isn&apos;t available for this recipe yet.</AppText>;
   }
 
   return (
-    <Card style={{ gap: space.lg }}>
-      <View style={{ gap: space.xxs }}>
-        <AppText variant="headline">Per serving</AppText>
-        <AppText variant="footnote" color="textSecondary">
-          Estimated from the ingredients, for 1 of {servings} servings. Amounts vary with how it&apos;s cooked.
+    <View style={{ gap: space.md }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+        {showCalories ? <Tile label="Energy" value={String(nutrition.energyKcal)} unit="kcal" /> : null}
+        <Tile label="Protein" value={num(nutrition.proteinG)} unit="g" />
+        <Tile label="Carbs" value={num(nutrition.carbsG)} unit="g" />
+        <Tile label="Fat" value={num(nutrition.fatG)} unit="g" />
+        <Tile label="Fibre" value={num(nutrition.fibreG)} unit="g" />
+        {nutrition.sodiumMg != null ? <Tile label="Sodium" value={num(nutrition.sodiumMg)} unit="mg" /> : null}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md }}>
+        <AppText variant="footnote" color="textSecondary" style={{ flex: 1 }}>
+          Estimated per serving (1 of {servings})
         </AppText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <AppText variant="footnote" color="textSecondary">
+            Calories
+          </AppText>
+          <Switch
+            value={showCalories}
+            onValueChange={setShowCalories}
+            accessibilityLabel="Show calories"
+            trackColor={{ true: colors.primary }}
+          />
+        </View>
       </View>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: space.lg }}>
-        {showCalories ? <Stat label="Calories" value={`${nutrition.energyKcal} kcal`} /> : null}
-        <Stat label="Protein" value={fmt(nutrition.proteinG, 'g')} />
-        <Stat label="Carbs" value={fmt(nutrition.carbsG, 'g')} />
-        <Stat label="Fat" value={fmt(nutrition.fatG, 'g')} />
-        <Stat label="Fibre" value={fmt(nutrition.fibreG, 'g')} />
-        <Stat label="Salt (sodium)" value={fmt(nutrition.sodiumMg, 'mg')} />
-      </View>
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          paddingTop: space.md,
-        }}>
-        <AppText variant="subhead" style={{ flex: 1 }}>
-          Show calories
-        </AppText>
-        <Switch
-          value={showCalories}
-          onValueChange={setShowCalories}
-          accessibilityLabel="Show calories"
-          trackColor={{ true: colors.primary }}
-        />
-      </View>
-    </Card>
+    </View>
   );
 }
